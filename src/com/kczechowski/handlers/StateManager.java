@@ -1,4 +1,7 @@
-package com.kczechowski;
+package com.kczechowski.handlers;
+
+import com.kczechowski.states.State;
+import com.kczechowski.states.NullState;
 
 import java.util.Stack;
 
@@ -32,7 +35,6 @@ public class StateManager {
         State temp = stateStack.peek();
         temp.dispose();
         stateStack.pop();
-        printStateList();
     }
 
     public void printStateList(){

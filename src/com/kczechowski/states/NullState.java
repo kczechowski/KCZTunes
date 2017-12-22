@@ -1,5 +1,6 @@
-package com.kczechowski;
+package com.kczechowski.states;
 
+import com.kczechowski.handlers.StateManager;
 import javafx.scene.layout.Pane;
 
 public class NullState extends State {

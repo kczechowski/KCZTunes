@@ -1,11 +1,8 @@
-package com.kczechowski;
+package com.kczechowski.states;
 
+import com.kczechowski.handlers.StateManager;
 import com.kczechowski.main.App;
-import javafx.embed.swing.SwingFXUtils;
 import javafx.scene.control.Button;
-import javafx.scene.layout.Pane;
-
-import javax.swing.*;
 
 public class CustomState extends State {
 
@@ -15,8 +12,6 @@ public class CustomState extends State {
 
     @Override
     public void init() {
-
-
         pane.setStyle("-fx-background-color: #ffffff;");
         Button backButton = new Button("<");
         backButton.setOnAction(event -> {

@@ -1,9 +1,10 @@
 package com.kczechowski.main;
 
-import com.kczechowski.CustomState;
-import com.kczechowski.EventManager;
-import com.kczechowski.StateChangeListener;
-import com.kczechowski.StateManager;
+import com.kczechowski.config.AppConfig;
+import com.kczechowski.states.CustomState;
+import com.kczechowski.handlers.EventManager;
+import com.kczechowski.listeners.StateChangeListener;
+import com.kczechowski.handlers.StateManager;
 import javafx.application.Application;
 import javafx.geometry.Insets;
 import javafx.geometry.Orientation;
@@ -40,17 +41,18 @@ public class App extends Application {
         borderPane.setBottom(getControlBar());
         Scene scene = new Scene(borderPane, 800, 600);
 
+        primaryStage.setTitle(AppConfig.DEFAULT_TITLE);
         primaryStage.setMinWidth(800);
         primaryStage.setMinHeight(600);
         primaryStage.setScene(scene);
         primaryStage.show();
 
-        App.eventManager.state = new StateChangeListener() {
+        App.eventManager.addStateChangeListener(new StateChangeListener() {
             @Override
             public void onStateChange() {
                 borderPane.setCenter(getMain());
             }
-        };
+        });
     }
 
     public Pane getMain(){
@@ -71,7 +73,10 @@ public class App extends Application {
         ToolBar toolBar = new ToolBar();
         Button btnPlay = new Button("Play");
         Button btnPause = new Button("Pause");
-        toolBar.getItems().addAll(btnPlay, btnPause);
+        Label title = new Label("Name");
+        Label artist = new Label("Artist");
+
+        toolBar.getItems().addAll(title, artist, btnPlay, btnPause);
         toolBar.setOrientation(Orientation.HORIZONTAL);
         return toolBar;
     }
@@ -85,8 +90,8 @@ public class App extends Application {
 //        vbox.setSpacing(8);
 
         Text title = new Text("Library");
-        title.setFont(Font.font("Arial", FontWeight.BOLD, 14));
-
+//        title.setFont(Font.font("Arial", FontWeight.BOLD, 14));
+        title.setFont(Font.font(16));
         Button button1 = new Button("Albums");
         Button button2 = new Button("Artists");
 
@@ -95,7 +100,6 @@ public class App extends Application {
             borderPane.setCenter(getMain());
         });
 
-        VBox.setMargin(button1, new Insets(0,0,0,0));
         vbox.getChildren().addAll(title, button1, button2);
 
         scrollPane.setContent(vbox);
