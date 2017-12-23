@@ -1,10 +1,12 @@
 package com.kczechowski.main;
 
 import com.kczechowski.config.AppConfig;
-import com.kczechowski.states.CustomState;
 import com.kczechowski.handlers.EventManager;
-import com.kczechowski.listeners.StateChangeListener;
 import com.kczechowski.handlers.StateManager;
+import com.kczechowski.listeners.StateChangeListener;
+import com.kczechowski.states.AlbumsListState;
+import com.kczechowski.states.ArtistsListState;
+import com.kczechowski.states.SongsListState;
 import javafx.application.Application;
 import javafx.geometry.Insets;
 import javafx.geometry.Orientation;
@@ -14,7 +16,6 @@ import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.VBox;
 import javafx.scene.text.Font;
-import javafx.scene.text.FontWeight;
 import javafx.scene.text.Text;
 import javafx.stage.Stage;
 
@@ -31,8 +32,8 @@ public class App extends Application {
 
     @Override
     public void start(Stage primaryStage) throws Exception {
-        stateManager = new StateManager();
         eventManager = new EventManager();
+        stateManager = new StateManager();
 
         borderPane = new BorderPane();
         borderPane.setTop(getMenuBar());
@@ -86,21 +87,20 @@ public class App extends Application {
 
         VBox vbox = new VBox();
         vbox.setPrefWidth(200);
-//        vbox.setPadding(new Insets(10));
-//        vbox.setSpacing(8);
 
         Text title = new Text("Library");
-//        title.setFont(Font.font("Arial", FontWeight.BOLD, 14));
         title.setFont(Font.font(16));
-        Button button1 = new Button("Albums");
-        Button button2 = new Button("Artists");
 
-        button1.setOnAction(event -> {
-            stateManager.pushState(new CustomState(stateManager));
-            borderPane.setCenter(getMain());
-        });
+        Button artistsBtn = new Button("Artists");
+        artistsBtn.setOnAction(event -> stateManager.pushState(new ArtistsListState(stateManager)));
 
-        vbox.getChildren().addAll(title, button1, button2);
+        Button albumsBtn = new Button("Albums");
+        albumsBtn.setOnAction(event -> stateManager.pushState(new AlbumsListState(stateManager)));
+
+        Button songsBtn = new Button("Songs");
+        songsBtn.setOnAction(event -> stateManager.pushState(new SongsListState(stateManager)));
+
+        vbox.getChildren().addAll(title, artistsBtn, albumsBtn, songsBtn);
 
         scrollPane.setContent(vbox);
         scrollPane.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
