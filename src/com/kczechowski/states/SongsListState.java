@@ -24,8 +24,6 @@ public class SongsListState extends State {
         Text text = new Text("Display all songs");
 
         ObservableList list = FXCollections.observableArrayList();
-        list.addAll("Song1", "Song2", "Song3", "Song4", "Song5", "Song6", "Song7", "Song8", "Song9", "Song10",
-                "Song11", "Song12", "Song13", "Song14", "Song15", "Song16", "Song17", "Song18", "Song19", "Song20", "Song21");
 
         ListView listView = new ListView();
         listView.setItems(list);
@@ -34,6 +32,17 @@ public class SongsListState extends State {
         vBox.getChildren().addAll(backButton, text, listView);
 
         pane.getChildren().addAll(vBox);
+
+        new Thread(() -> {
+            /*File file = new File(AppConfig.DEFAULT_RES_DIRECTORY + "\\AM\\");
+
+            List files = FilesUtils.getFilesInFolder(file);
+
+            Platform.runLater(() -> {
+                list.addAll(files);
+            });*/
+
+        }).start();
     }
 
     @Override

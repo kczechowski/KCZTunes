@@ -1,7 +1,11 @@
 package com.kczechowski.states;
 
+import com.google.gson.Gson;
+import com.google.gson.stream.JsonReader;
+import com.kczechowski.data.models.ArtistsWrapper;
 import com.kczechowski.handlers.StateManager;
 import com.kczechowski.main.App;
+import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.scene.control.Button;
@@ -9,7 +13,14 @@ import javafx.scene.control.ListView;
 import javafx.scene.layout.VBox;
 import javafx.scene.text.Text;
 
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.util.List;
+
 public class ArtistsListState extends State {
+
+    List artists;
+
     public ArtistsListState(StateManager stateManager) {
         super(stateManager);
     }
@@ -24,8 +35,6 @@ public class ArtistsListState extends State {
         Text text = new Text("Display all artists");
 
         ObservableList list = FXCollections.observableArrayList();
-        list.addAll("Song1", "Song2", "Song3", "Song4", "Song5", "Song6", "Song7", "Song8", "Song9", "Song10",
-                "Song11", "Song12", "Song13", "Song14", "Song15", "Song16", "Song17", "Song18", "Song19", "Song20", "Song21");
 
         ListView listView = new ListView();
         listView.setItems(list);
@@ -34,6 +43,22 @@ public class ArtistsListState extends State {
         vBox.getChildren().addAll(backButton, text, listView);
 
         pane.getChildren().addAll(vBox);
+
+
+        new Thread(() -> {
+            try {
+                JsonReader jsonReader = new JsonReader(new FileReader("res/library.json"));
+                Gson gson = new Gson();
+                ArtistsWrapper wrapper = gson.fromJson(jsonReader, ArtistsWrapper.class);
+                artists = wrapper.getArtists();
+            } catch (FileNotFoundException e) {
+                e.printStackTrace();
+            }
+
+            Platform.runLater(() -> {
+                list.addAll(artists);
+            });
+        }).start();
     }
 
     @Override

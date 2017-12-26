@@ -3,6 +3,7 @@ package com.kczechowski.main;
 import com.kczechowski.config.AppConfig;
 import com.kczechowski.handlers.EventManager;
 import com.kczechowski.handlers.StateManager;
+import com.kczechowski.listeners.MusicPlayerStatusChangeListener;
 import com.kczechowski.listeners.StateChangeListener;
 import com.kczechowski.states.AlbumsListState;
 import com.kczechowski.states.ArtistsListState;
@@ -15,13 +16,19 @@ import javafx.scene.control.*;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.VBox;
+import javafx.scene.media.Media;
+import javafx.scene.media.MediaPlayer;
 import javafx.scene.text.Font;
 import javafx.scene.text.Text;
 import javafx.stage.Stage;
 
+import java.io.File;
+
 public class App extends Application {
 
     private BorderPane borderPane;
+
+    private MediaPlayer player;
 
     public static EventManager eventManager;
     private StateManager stateManager;
@@ -40,6 +47,11 @@ public class App extends Application {
         borderPane.setLeft(getSideMenu());
         borderPane.setCenter(getMain());
         borderPane.setBottom(getControlBar());
+
+        String uriString = new File(AppConfig.DEFAULT_RES_DIRECTORY + "library\\Arctic_Monkeys\\AM\\11.mp3").toURI().toString();
+        Media media = new Media(uriString);
+        player = new MediaPlayer(media);
+
         Scene scene = new Scene(borderPane, 800, 600);
 
         primaryStage.setTitle(AppConfig.DEFAULT_TITLE);
@@ -48,12 +60,7 @@ public class App extends Application {
         primaryStage.setScene(scene);
         primaryStage.show();
 
-        App.eventManager.addStateChangeListener(new StateChangeListener() {
-            @Override
-            public void onStateChange() {
-                borderPane.setCenter(getMain());
-            }
-        });
+        setListeners();
     }
 
     public Pane getMain(){
@@ -73,7 +80,9 @@ public class App extends Application {
     public ToolBar getControlBar(){
         ToolBar toolBar = new ToolBar();
         Button btnPlay = new Button("Play");
+        btnPlay.setOnAction(event -> App.eventManager.onResume());
         Button btnPause = new Button("Pause");
+        btnPause.setOnAction(event -> App.eventManager.onPause());
         Label title = new Label("Name");
         Label artist = new Label("Artist");
 
@@ -106,6 +115,27 @@ public class App extends Application {
         scrollPane.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
         scrollPane.setVbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
         return scrollPane;
+    }
+
+    private void setListeners(){
+        App.eventManager.addStateChangeListener(new StateChangeListener() {
+            @Override
+            public void onStateChange() {
+                borderPane.setCenter(getMain());
+            }
+        });
+
+        App.eventManager.addMusicPlayerStatusChangeListener(new MusicPlayerStatusChangeListener() {
+            @Override
+            public void onPause() {
+                player.pause();
+            }
+
+            @Override
+            public void onResume() {
+                player.play();
+            }
+        });
     }
 
 }

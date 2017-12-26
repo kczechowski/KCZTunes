@@ -1,0 +1,30 @@
+{
+  "artists": [
+    {
+      "artistName": "Arctic Monkeys",
+      "albums": [
+        {
+          "albumName": "AM",
+          "songs": [
+            {
+              "songName": "Do I Wanna Know"
+            }
+            ]
+        }
+        ]
+    },
+    {
+      "artistName": "Radiohead",
+      "albums": [
+        {
+          "albumName": "OK Computer",
+          "songs": [
+            {
+              "songName": "Paranoid Android"
+            }
+            ]
+        }
+        ]
+    }
+    ]
+}
