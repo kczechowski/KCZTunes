@@ -1,8 +1,7 @@
 package com.kczechowski.states;
 
-import com.google.gson.Gson;
-import com.google.gson.stream.JsonReader;
-import com.kczechowski.data.models.ArtistsWrapper;
+import com.kczechowski.config.keys.BundleKeys;
+import com.kczechowski.data.models.ArtistModel;
 import com.kczechowski.handlers.StateManager;
 import com.kczechowski.main.App;
 import javafx.application.Platform;
@@ -13,13 +12,10 @@ import javafx.scene.control.ListView;
 import javafx.scene.layout.VBox;
 import javafx.scene.text.Text;
 
-import java.io.FileNotFoundException;
-import java.io.FileReader;
+import java.util.HashMap;
 import java.util.List;
 
 public class ArtistsListState extends State {
-
-    List artists;
 
     public ArtistsListState(StateManager stateManager) {
         super(stateManager);
@@ -39,6 +35,20 @@ public class ArtistsListState extends State {
         ListView listView = new ListView();
         listView.setItems(list);
 
+        listView.getSelectionModel().selectedIndexProperty().addListener((observable, oldValue, newValue) -> {
+
+            ArtistModel artistModel = (ArtistModel) list.get(newValue.intValue());
+
+            HashMap<String, Object> bundle = new HashMap<>();
+            bundle.put(BundleKeys.ARTIST_ID, artistModel.getArtistID());
+
+            ArtistState artistState = new ArtistState(stateManager);
+            artistState.setBundle(bundle);
+            stateManager.pushState(artistState);
+
+        });
+
+
         VBox vBox = new VBox();
         vBox.getChildren().addAll(backButton, text, listView);
 
@@ -46,18 +56,12 @@ public class ArtistsListState extends State {
 
 
         new Thread(() -> {
-            try {
-                JsonReader jsonReader = new JsonReader(new FileReader("res/library.json"));
-                Gson gson = new Gson();
-                ArtistsWrapper wrapper = gson.fromJson(jsonReader, ArtistsWrapper.class);
-                artists = wrapper.getArtists();
-            } catch (FileNotFoundException e) {
-                e.printStackTrace();
-            }
 
+            List<ArtistModel> artists = App.library.getAllArtists();
             Platform.runLater(() -> {
                 list.addAll(artists);
             });
+
         }).start();
     }
 

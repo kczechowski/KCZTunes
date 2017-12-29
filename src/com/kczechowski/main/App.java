@@ -1,14 +1,14 @@
 package com.kczechowski.main;
 
 import com.kczechowski.config.AppConfig;
+import com.kczechowski.data.Library;
 import com.kczechowski.handlers.EventManager;
 import com.kczechowski.handlers.StateManager;
-import com.kczechowski.listeners.MusicPlayerStatusChangeListener;
+import com.kczechowski.handlers.player.MusicPlayer;
 import com.kczechowski.listeners.StateChangeListener;
-import com.kczechowski.states.AlbumsListState;
 import com.kczechowski.states.ArtistsListState;
-import com.kczechowski.states.SongsListState;
 import javafx.application.Application;
+import javafx.application.Platform;
 import javafx.geometry.Insets;
 import javafx.geometry.Orientation;
 import javafx.scene.Scene;
@@ -16,13 +16,13 @@ import javafx.scene.control.*;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.VBox;
-import javafx.scene.media.Media;
 import javafx.scene.media.MediaPlayer;
 import javafx.scene.text.Font;
 import javafx.scene.text.Text;
 import javafx.stage.Stage;
 
 import java.io.File;
+import java.nio.file.Paths;
 
 public class App extends Application {
 
@@ -31,7 +31,11 @@ public class App extends Application {
     private MediaPlayer player;
 
     public static EventManager eventManager;
+    public static Library library;
     private StateManager stateManager;
+    private MusicPlayer musicPlayer;
+
+    private String kcztunesPath = AppConfig.DEFAULT_RES_DIRECTORY;
 
     public static void main(String[] args) {
         launch(args);
@@ -41,26 +45,42 @@ public class App extends Application {
     public void start(Stage primaryStage) throws Exception {
         eventManager = new EventManager();
         stateManager = new StateManager();
+        musicPlayer = new MusicPlayer();
+        musicPlayer.init();
+        library = new Library();
 
         borderPane = new BorderPane();
         borderPane.setTop(getMenuBar());
         borderPane.setLeft(getSideMenu());
         borderPane.setCenter(getMain());
         borderPane.setBottom(getControlBar());
-
-        String uriString = new File(AppConfig.DEFAULT_RES_DIRECTORY + "library\\Arctic_Monkeys\\AM\\11.mp3").toURI().toString();
-        Media media = new Media(uriString);
-        player = new MediaPlayer(media);
+        borderPane.setDisable(true);
 
         Scene scene = new Scene(borderPane, 800, 600);
 
         primaryStage.setTitle(AppConfig.DEFAULT_TITLE);
+        primaryStage.setOnCloseRequest(event -> {
+            Platform.exit();
+            System.exit(0);
+        });
         primaryStage.setMinWidth(800);
         primaryStage.setMinHeight(600);
         primaryStage.setScene(scene);
         primaryStage.show();
 
         setListeners();
+
+        library.addResourceDirectory(new File(AppConfig.DEFAULT_RES_DIRECTORY + "input" + File.separator));
+
+        new Thread(()->{
+
+            library.build(kcztunesPath);
+            library.loadLibrary(Paths.get(kcztunesPath + "library" + File.separator));
+            Platform.runLater(()->{
+                borderPane.setDisable(false);
+            });
+
+        }).start();
     }
 
     public Pane getMain(){
@@ -103,13 +123,13 @@ public class App extends Application {
         Button artistsBtn = new Button("Artists");
         artistsBtn.setOnAction(event -> stateManager.pushState(new ArtistsListState(stateManager)));
 
-        Button albumsBtn = new Button("Albums");
-        albumsBtn.setOnAction(event -> stateManager.pushState(new AlbumsListState(stateManager)));
+/*        Button albumsBtn = new Button("Albums");
+        albumsBtn.setOnAction(event -> stateManager.pushState(new ArtistState(stateManager)));
 
         Button songsBtn = new Button("Songs");
-        songsBtn.setOnAction(event -> stateManager.pushState(new SongsListState(stateManager)));
+        songsBtn.setOnAction(event -> stateManager.pushState(new SongsListState(stateManager)));*/
 
-        vbox.getChildren().addAll(title, artistsBtn, albumsBtn, songsBtn);
+        vbox.getChildren().addAll(title, artistsBtn);
 
         scrollPane.setContent(vbox);
         scrollPane.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
@@ -122,18 +142,6 @@ public class App extends Application {
             @Override
             public void onStateChange() {
                 borderPane.setCenter(getMain());
-            }
-        });
-
-        App.eventManager.addMusicPlayerStatusChangeListener(new MusicPlayerStatusChangeListener() {
-            @Override
-            public void onPause() {
-                player.pause();
-            }
-
-            @Override
-            public void onResume() {
-                player.play();
             }
         });
     }

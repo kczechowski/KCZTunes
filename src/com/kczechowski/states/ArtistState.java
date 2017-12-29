@@ -1,13 +1,19 @@
 package com.kczechowski.states;
 
+import com.kczechowski.config.keys.BundleKeys;
+import com.kczechowski.data.models.AlbumModel;
 import com.kczechowski.handlers.StateManager;
 import com.kczechowski.main.App;
+import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.scene.control.Button;
 import javafx.scene.control.ListView;
 import javafx.scene.layout.VBox;
 import javafx.scene.text.Text;
+
+import java.util.HashMap;
+import java.util.List;
 
 public class ArtistState extends State {
     public ArtistState(StateManager stateManager) {
@@ -21,19 +27,39 @@ public class ArtistState extends State {
             stateManager.popState();
             App.eventManager.stateChanged();
         });
-        Text text = new Text("Display artist's albums");
+        Text text = new Text("Display all albums");
 
         ObservableList list = FXCollections.observableArrayList();
-        list.addAll("Song1", "Song2", "Song3", "Song4", "Song5", "Song6", "Song7", "Song8", "Song9", "Song10",
-                "Song11", "Song12", "Song13", "Song14", "Song15", "Song16", "Song17", "Song18", "Song19", "Song20", "Song21");
 
         ListView listView = new ListView();
         listView.setItems(list);
+
+        listView.getSelectionModel().selectedIndexProperty().addListener((observable, oldValue, newValue) -> {
+
+            AlbumModel albumModel = (AlbumModel) list.get(newValue.intValue());
+
+            HashMap<String, Object> bundle = new HashMap<>();
+            bundle.put(BundleKeys.ALBUM_ID, albumModel.getAlbumID());
+
+            AlbumState albumState = new AlbumState(stateManager);
+            albumState.setBundle(bundle);
+            stateManager.pushState(albumState);
+        });
 
         VBox vBox = new VBox();
         vBox.getChildren().addAll(backButton, text, listView);
 
         pane.getChildren().addAll(vBox);
+
+        new Thread(() -> {
+
+            String artistID = (String) bundle.get(BundleKeys.ARTIST_ID);
+            List<AlbumModel> albums = App.library.getAlbumsByArist(artistID);
+            Platform.runLater(() -> {
+                list.addAll(albums);
+            });
+
+        }).start();
     }
 
     @Override

@@ -1,5 +1,6 @@
 package com.kczechowski.handlers;
 
+import com.kczechowski.data.models.SongModel;
 import com.kczechowski.listeners.MusicPlayerStatusChangeListener;
 import com.kczechowski.listeners.StateChangeListener;
 
@@ -18,6 +19,12 @@ public class EventManager {
     public void stateChanged(){
         for(StateChangeListener state : stateChangeListenerList){
             state.onStateChange();
+        }
+    }
+
+    public void onSongPlayRequest(SongModel song){
+        for(MusicPlayerStatusChangeListener listener : musicPlayerStatusChangeListenerList){
+            listener.onSongPlayRequest(song);
         }
     }
 

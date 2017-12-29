@@ -7,7 +7,16 @@
           "albumName": "AM",
           "songs": [
             {
-              "songName": "Do I Wanna Know"
+            	"songTrack" : 0,
+            	"songTitle": "Do I Wanna Know",
+            	"songPath": "library\\Arctic_Monkeys\\AM\\01.mp3",
+            	"songDuration": "3:00"
+            },
+            {
+            	"songTrack" : 1,
+            	"songTitle": "Knee Socks",
+            	"songPath": "library\\Arctic_Monkeys\\AM\\11.mp3",
+            	"songDuration": "3:00"
             }
             ]
         }
@@ -20,7 +29,10 @@
           "albumName": "OK Computer",
           "songs": [
             {
-              "songName": "Paranoid Android"
+            	"songTrack" : 0,
+              	"songTitle": "Paranoid Android",
+              	"songPath": "",
+              	"songDuration": "3:00"
             }
             ]
         }
