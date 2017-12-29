@@ -14,9 +14,11 @@ public class MusicPlayer {
     private Media media;
     private boolean isPlaying = false;
     private boolean isNullSong = true;
+    private SongModel songModel;
+    private App app;
 
-    public MusicPlayer() {
-
+    public MusicPlayer(App app) {
+        this.app = app;
     }
 
     public void init(){
@@ -32,9 +34,10 @@ public class MusicPlayer {
                 String uriString = new File(AppConfig.DEFAULT_RES_DIRECTORY + song.getSongPath()).toURI().toString();
                 Media media = new Media(uriString);
                 player = new MediaPlayer(media);
-                player.play();
-                isPlaying = true;
                 isNullSong = false;
+                songModel = song;
+                onResume();
+                app.update();
             }
 
             @Override
@@ -55,4 +58,15 @@ public class MusicPlayer {
         });
     }
 
+    public SongModel getLoadedSong(){
+        return songModel;
+    }
+
+    public boolean isPlaying() {
+        return isPlaying;
+    }
+
+    public boolean isNullSong() {
+        return isNullSong;
+    }
 }

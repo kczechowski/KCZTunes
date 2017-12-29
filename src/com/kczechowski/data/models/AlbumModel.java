@@ -3,6 +3,11 @@ package com.kczechowski.data.models;
 public class AlbumModel {
     private String albumID;
     private String albumName;
+    private byte[] albumImage;
+
+    public String getAlbumID() {
+        return albumID;
+    }
 
     public void setAlbumID(String albumID) {
         this.albumID = albumID;
@@ -16,9 +21,12 @@ public class AlbumModel {
         this.albumName = albumName;
     }
 
-    public String getAlbumID() {
+    public byte[] getAlbumImage() {
+        return albumImage;
+    }
 
-        return albumID;
+    public void setAlbumImage(byte[] albumImage) {
+        this.albumImage = albumImage;
     }
 
     @Override

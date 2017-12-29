@@ -7,6 +7,9 @@ public class SongModel {
     private String songTrack;
     private String songDuration;
 
+    private ArtistModel artist;
+    private AlbumModel album;
+
     public String getSongID() {
         return songID;
     }
@@ -45,6 +48,22 @@ public class SongModel {
 
     public void setSongDuration(String songDuration) {
         this.songDuration = songDuration;
+    }
+
+    public ArtistModel getArtist() {
+        return artist;
+    }
+
+    public void setArtist(ArtistModel artist) {
+        this.artist = artist;
+    }
+
+    public AlbumModel getAlbum() {
+        return album;
+    }
+
+    public void setAlbum(AlbumModel album) {
+        this.album = album;
     }
 
     @Override

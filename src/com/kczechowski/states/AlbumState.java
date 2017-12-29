@@ -1,9 +1,6 @@
 package com.kczechowski.states;
 
 import com.kczechowski.config.keys.BundleKeys;
-import com.kczechowski.data.Library;
-import com.kczechowski.data.models.AlbumModel;
-import com.kczechowski.data.models.ArtistModel;
 import com.kczechowski.data.models.SongModel;
 import com.kczechowski.handlers.StateManager;
 import com.kczechowski.main.App;
@@ -53,12 +50,10 @@ public class AlbumState extends State {
 
             String albumID = (String) bundle.get(BundleKeys.ALBUM_ID);
             List<SongModel> songs = App.library.getSongsByAlbum(albumID);
-            AlbumModel albumModel = App.library.getAlbumById(Library.getAlbumID(songs.get(0).getSongID()));
-            ArtistModel artistModel = App.library.getArtistById(Library.getArtistID(songs.get(0).getSongID()));
             Platform.runLater(() -> {
                 list.addAll(songs);
-                artistName.setText(artistModel.getArtistName());
-                albumName.setText(albumModel.getAlbumName());
+                artistName.setText(songs.get(0).getArtist().getArtistName());
+                albumName.setText(songs.get(0).getAlbum().getAlbumName());
             });
 
         }).start();

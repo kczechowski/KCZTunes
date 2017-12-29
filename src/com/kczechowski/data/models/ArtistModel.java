@@ -8,17 +8,16 @@ public class ArtistModel {
         return artistID;
     }
 
+    public void setArtistID(String artistID) {
+        this.artistID = artistID;
+    }
+
     public String getArtistName() {
         return artistName;
     }
 
     public void setArtistName(String artistName) {
         this.artistName = artistName;
-    }
-
-    public void setArtistID(String artistID) {
-
-        this.artistID = artistID;
     }
 
     @Override

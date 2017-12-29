@@ -6,10 +6,13 @@ import com.kczechowski.data.models.AlbumModel;
 import com.kczechowski.data.models.ArtistModel;
 import com.kczechowski.data.models.LibraryWrapper;
 import com.kczechowski.data.models.SongModel;
+import com.kczechowski.main.App;
 import com.kczechowski.utils.FilesUtils;
 import com.mpatric.mp3agic.InvalidDataException;
 import com.mpatric.mp3agic.Mp3File;
 import com.mpatric.mp3agic.UnsupportedTagException;
+import javafx.application.Platform;
+import javafx.scene.control.Alert;
 
 import java.io.*;
 import java.nio.file.Files;
@@ -36,6 +39,8 @@ public class Library {
     public static final String TAG_ARTIST = "artist";
     public static final String TAG_TRACK = "track";
     public static final String TAG_DURATION = "duration";
+    public static final String TAG_ALBUM_IMAGE = "image";
+    public static final Path NULL_ALBUM_IMAGE_PATH = Paths.get("res/nullAlbumImage.png");
 
     public Library() {
         resources = new ArrayList<>();
@@ -94,6 +99,7 @@ public class Library {
             String songTrack = (String) songTags.get(TAG_TRACK);
             String songDuration = (String) songTags.get(TAG_DURATION);
             String songPath = file.getAbsolutePath();
+            byte[] albumImage = (byte[]) songTags.get(TAG_ALBUM_IMAGE);
 
             String artistKey = formatID(artistName);
             String albumKey = artistKey + ">" + formatID(albumName);
@@ -119,6 +125,7 @@ public class Library {
                 AlbumModel albumModel = new AlbumModel();
                 albumModel.setAlbumName(albumName);
                 albumModel.setAlbumID(albumKey);
+                albumModel.setAlbumImage(albumImage);
                 albumModelHashMap.put(albumKey, albumModel);
 
                 //Create directory for every album
@@ -185,8 +192,24 @@ public class Library {
             Collections.sort(gArtists, artistModelComparator);
             Collections.sort(gAlbums, albumModelComparator);
             Collections.sort(gSongs, songModelComparator);
+
+            //assign artist and album to every song
+            for(SongModel songModel : gSongs){
+                ArtistModel artistModel = App.library.getArtistById(Library.getArtistID(songModel.getSongID()));
+                AlbumModel albumModel = App.library.getAlbumById(Library.getAlbumID(songModel.getSongID()));
+                songModel.setArtist(artistModel);
+                songModel.setAlbum(albumModel);
+            }
         } catch (FileNotFoundException e) {
             e.printStackTrace();
+            Platform.runLater(new Runnable() {
+                @Override
+                public void run() {
+                    Alert alert = new Alert(Alert.AlertType.ERROR);
+                    alert.showAndWait();
+                }
+            });
+
         }
     }
 
@@ -209,10 +232,19 @@ public class Library {
             Mp3File mp3File = new Mp3File(file);
 
             if(mp3File.hasId3v1Tag() || mp3File.hasId3v2Tag()){
-                map.put(TAG_TITLE, mp3File.getId3v1Tag().getTitle());
-                map.put(TAG_ALBUM, mp3File.getId3v1Tag().getAlbum());
-                map.put(TAG_ARTIST, mp3File.getId3v1Tag().getArtist());
-                map.put(TAG_TRACK, mp3File.getId3v1Tag().getTrack());
+                map.put(TAG_TITLE, mp3File.getId3v2Tag().getTitle());
+                map.put(TAG_ALBUM, mp3File.getId3v2Tag().getAlbum());
+                map.put(TAG_ARTIST, mp3File.getId3v2Tag().getArtist());
+                map.put(TAG_TRACK, mp3File.getId3v2Tag().getTrack());
+
+                //if there's no album image assigned -> assign default image
+                if(mp3File.getId3v2Tag().getAlbumImage() == null){
+                    byte[] img = Files.readAllBytes(NULL_ALBUM_IMAGE_PATH);
+                    map.put(TAG_ALBUM_IMAGE, img);
+                }else{
+                    map.put(TAG_ALBUM_IMAGE, mp3File.getId3v2Tag().getAlbumImage());
+                }
+
                 map.put(TAG_DURATION, "0:00");
                 //add duration
             }

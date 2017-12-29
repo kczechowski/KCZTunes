@@ -2,6 +2,7 @@ package com.kczechowski.main;
 
 import com.kczechowski.config.AppConfig;
 import com.kczechowski.data.Library;
+import com.kczechowski.data.models.SongModel;
 import com.kczechowski.handlers.EventManager;
 import com.kczechowski.handlers.StateManager;
 import com.kczechowski.handlers.player.MusicPlayer;
@@ -13,7 +14,10 @@ import javafx.geometry.Insets;
 import javafx.geometry.Orientation;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
 import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.HBox;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.VBox;
 import javafx.scene.media.MediaPlayer;
@@ -21,6 +25,7 @@ import javafx.scene.text.Font;
 import javafx.scene.text.Text;
 import javafx.stage.Stage;
 
+import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.nio.file.Paths;
 
@@ -45,7 +50,7 @@ public class App extends Application {
     public void start(Stage primaryStage) throws Exception {
         eventManager = new EventManager();
         stateManager = new StateManager();
-        musicPlayer = new MusicPlayer();
+        musicPlayer = new MusicPlayer(this);
         musicPlayer.init();
         library = new Library();
 
@@ -97,17 +102,42 @@ public class App extends Application {
         return menuBar;
     }
 
+    public void update(){
+        borderPane.setBottom(getControlBar());
+    }
+
     public ToolBar getControlBar(){
         ToolBar toolBar = new ToolBar();
         Button btnPlay = new Button("Play");
         btnPlay.setOnAction(event -> App.eventManager.onResume());
         Button btnPause = new Button("Pause");
         btnPause.setOnAction(event -> App.eventManager.onPause());
+        ImageView imageView = new ImageView();
+        imageView.setFitWidth(64);
+        imageView.setPreserveRatio(true);
+        imageView.setSmooth(true);
+        imageView.setCache(true);
+
+        VBox smallSongInfoBox = new VBox();
         Label title = new Label("Name");
         Label artist = new Label("Artist");
+        Label album = new Label("Album");
+        smallSongInfoBox.getChildren().addAll(title, album, artist);
 
-        toolBar.getItems().addAll(title, artist, btnPlay, btnPause);
+        HBox bigSongInfoBox = new HBox();
+        bigSongInfoBox.setPrefWidth(200);
+        bigSongInfoBox.getChildren().addAll(imageView, smallSongInfoBox);
+
+        toolBar.getItems().addAll(bigSongInfoBox, btnPlay, btnPause);
         toolBar.setOrientation(Orientation.HORIZONTAL);
+        if(!musicPlayer.isNullSong()){
+            SongModel loadedSong = musicPlayer.getLoadedSong();
+            title.setText(loadedSong.getSongName());
+            artist.setText(loadedSong.getArtist().getArtistName());
+            album.setText(loadedSong.getAlbum().getAlbumName());
+            Image image = new Image(new ByteArrayInputStream(loadedSong.getAlbum().getAlbumImage()));
+            imageView.setImage(image);
+        }
         return toolBar;
     }
 
