@@ -16,18 +16,20 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
+import java.util.*;
 
 public class Library {
 
     private List<File> resources; //All directories with music
     private List<File> songsFiles;
 
-    List<ArtistModel> gArtists = null;
-    List<AlbumModel> gAlbums = null;
-    List<SongModel> gSongs = null;
+    private List<ArtistModel> gArtists = null;
+    private List<AlbumModel> gAlbums = null;
+    private List<SongModel> gSongs = null;
+
+    private Comparator<ArtistModel> artistModelComparator = (o1, o2) -> o1.getArtistID().compareTo(o2.getArtistID());
+    private Comparator<AlbumModel> albumModelComparator = (o1, o2) -> o1.getAlbumID().compareTo(o2.getAlbumID());
+    private Comparator<SongModel> songModelComparator = (o1, o2) -> o1.getSongID().compareTo(o2.getSongID());
 
     public static final String TAG_TITLE = "title";
     public static final String TAG_ALBUM = "album";
@@ -89,17 +91,20 @@ public class Library {
             String songName = (String) songTags.get(TAG_TITLE);
             String artistName = (String) songTags.get(TAG_ARTIST);
             String albumName = (String) songTags.get(TAG_ALBUM);
+            String songTrack = (String) songTags.get(TAG_TRACK);
+            String songDuration = (String) songTags.get(TAG_DURATION);
             String songPath = file.getAbsolutePath();
+
             String artistKey = formatID(artistName);
             String albumKey = artistKey + ">" + formatID(albumName);
             String songKey = albumKey + ">" + formatID(songName);
 
             //Assign artists to map
-            if(!artistModelHashMap.containsKey(artistName)){
+            if(!artistModelHashMap.containsKey(artistKey)){
                 ArtistModel artistModel = new ArtistModel();
                 artistModel.setArtistName(artistName);
                 artistModel.setArtistID(artistKey);
-                artistModelHashMap.put(artistName, artistModel);
+                artistModelHashMap.put(artistKey, artistModel);
 
                 //Create directory for every artist
                 try {
@@ -110,11 +115,11 @@ public class Library {
             }
 
             //Assign albums to map
-            if(!albumModelHashMap.containsKey(albumName)){
+            if(!albumModelHashMap.containsKey(albumKey)){
                 AlbumModel albumModel = new AlbumModel();
                 albumModel.setAlbumName(albumName);
                 albumModel.setAlbumID(albumKey);
-                albumModelHashMap.put(albumName, albumModel);
+                albumModelHashMap.put(albumKey, albumModel);
 
                 //Create directory for every album
                 try {
@@ -125,7 +130,7 @@ public class Library {
             }
 
             //Assign songs to map
-            if(!songModelHashMap.containsKey(songName)){
+            if(!songModelHashMap.containsKey(songKey)){
                 String songTargetPath = File.separator + artistKey + File.separator + formatID(albumName) + File.separator + FilesUtils.getCleanFilePath(formatID(songName)) + ".mp3";
                 Path sourcePath = Paths.get(songPath);
                 Path targetPath = Paths.get(libraryOutputPath + songTargetPath);
@@ -133,7 +138,9 @@ public class Library {
                 songModel.setSongName(songName);
                 songModel.setSongID(songKey);
                 songModel.setSongPath("library" + songTargetPath);
-                songModelHashMap.put(songName, songModel);
+                songModel.setSongTrack(songTrack);
+                songModel.setSongDuration(songDuration);
+                songModelHashMap.put(songKey, songModel);
 
                 //Copy every file from source to library directory
                 try {
@@ -174,6 +181,10 @@ public class Library {
             gArtists = wrapper.getArtists();
             gAlbums = wrapper.getAlbums();
             gSongs = wrapper.getSongs();
+
+            Collections.sort(gArtists, artistModelComparator);
+            Collections.sort(gAlbums, albumModelComparator);
+            Collections.sort(gSongs, songModelComparator);
         } catch (FileNotFoundException e) {
             e.printStackTrace();
         }
@@ -217,51 +228,33 @@ public class Library {
     }
 
     public static String getAlbumID(String id){
-        return id.split(">")[1];
+        return getArtistID(id) + ">" + id.split(">")[1];
     }
 
     public static String getSongID(String id){
-        return id.split(">")[2];
+        return getAlbumID(id) + ">" + id.split(">")[2];
     }
 
-/*    public ArtistModel getArtistById(String id){
+    public ArtistModel getArtistById(String id){
         ArtistModel temp = new ArtistModel();
         temp.setArtistID(id);
-        Comparator<ArtistModel> comparator = new Comparator<ArtistModel>() {
-            @Override
-            public int compare(ArtistModel o1, ArtistModel o2) {
-                return o1.getArtistID().compareTo(o2.getArtistID());
-            }
-        };
-        int found = Collections.binarySearch(gArtists, temp, comparator);
+        int found = Collections.binarySearch(gArtists, temp, artistModelComparator);
         return gArtists.get(found);
     }
 
     public AlbumModel getAlbumById(String id){
-        ArtistModel temp = new ArtistModel();
-        temp.setArtistID(id);
-        Comparator<ArtistModel> comparator = new Comparator<ArtistModel>() {
-            @Override
-            public int compare(ArtistModel o1, ArtistModel o2) {
-                return o1.getArtistID().compareTo(o2.getArtistID());
-            }
-        };
-        int found = Collections.binarySearch(gArtists, temp, comparator);
-        return gArtists.get(found);
+        AlbumModel temp = new AlbumModel();
+        temp.setAlbumID(id);
+        int found = Collections.binarySearch(gAlbums, temp, albumModelComparator);
+        return gAlbums.get(found);
     }
 
-    public ArtistModel getSongById(String id){
-        ArtistModel temp = new ArtistModel();
-        temp.setArtistID(id);
-        Comparator<ArtistModel> comparator = new Comparator<ArtistModel>() {
-            @Override
-            public int compare(ArtistModel o1, ArtistModel o2) {
-                return o1.getArtistID().compareTo(o2.getArtistID());
-            }
-        };
-        int found = Collections.binarySearch(gArtists, temp, comparator);
-        return gArtists.get(found);
-    }*/
+    public SongModel getSongById(String id){
+        SongModel temp = new SongModel();
+        temp.setSongID(id);
+        int found = Collections.binarySearch(gSongs, temp, songModelComparator);
+        return gSongs.get(found);
+    }
 
 
     public List<ArtistModel> getAllArtists(){

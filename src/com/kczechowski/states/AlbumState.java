@@ -1,6 +1,9 @@
 package com.kczechowski.states;
 
 import com.kczechowski.config.keys.BundleKeys;
+import com.kczechowski.data.Library;
+import com.kczechowski.data.models.AlbumModel;
+import com.kczechowski.data.models.ArtistModel;
 import com.kczechowski.data.models.SongModel;
 import com.kczechowski.handlers.StateManager;
 import com.kczechowski.main.App;
@@ -8,6 +11,7 @@ import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.scene.control.Button;
+import javafx.scene.control.Label;
 import javafx.scene.control.ListView;
 import javafx.scene.layout.VBox;
 import javafx.scene.text.Text;
@@ -26,6 +30,8 @@ public class AlbumState extends State {
             stateManager.popState();
             App.eventManager.stateChanged();
         });
+        Label artistName = new Label();
+        Label albumName = new Label();
         Text text = new Text("Display songs in album");
 
         ObservableList list = FXCollections.observableArrayList();
@@ -39,7 +45,7 @@ public class AlbumState extends State {
         });
 
         VBox vBox = new VBox();
-        vBox.getChildren().addAll(backButton, text, listView);
+        vBox.getChildren().addAll(backButton, artistName, albumName, text, listView);
 
         pane.getChildren().addAll(vBox);
 
@@ -47,8 +53,12 @@ public class AlbumState extends State {
 
             String albumID = (String) bundle.get(BundleKeys.ALBUM_ID);
             List<SongModel> songs = App.library.getSongsByAlbum(albumID);
+            AlbumModel albumModel = App.library.getAlbumById(Library.getAlbumID(songs.get(0).getSongID()));
+            ArtistModel artistModel = App.library.getArtistById(Library.getArtistID(songs.get(0).getSongID()));
             Platform.runLater(() -> {
                 list.addAll(songs);
+                artistName.setText(artistModel.getArtistName());
+                albumName.setText(albumModel.getAlbumName());
             });
 
         }).start();
