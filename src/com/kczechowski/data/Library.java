@@ -72,30 +72,6 @@ public class Library {
         FileUtils.deleteDirectory(libraryOutputPath.toFile());
         Files.createDirectories(libraryOutputPath);
 
-/*        Example library.json file
-        {
-            "artists": [
-                {
-                    "artistID": "Arctic_Monkeys",
-                        "artistName": "Arctic Monkeys"
-                }
-            ],
-            "albums": [
-                {
-                    "albumID": "Arctic_Monkeys>AM",
-                        "albumName": "AM"
-                }
-            ],
-            "songs": [
-            {
-                "songID": "Arctic_Monkeys>AM>Knee_Socks",
-                    "songName": "Knee Socks",
-                    "path": ""
-            }
-            ]
-        }
-        */
-
         HashMap<String, ArtistModel> artistModelHashMap = new HashMap<>();
         HashMap<String, AlbumModel> albumModelHashMap = new HashMap<>();
         HashMap<String, SongModel> songModelHashMap = new HashMap<>();
@@ -244,6 +220,7 @@ public class Library {
                 map.put(TAG_ALBUM, mp3File.getId3v2Tag().getAlbum());
                 map.put(TAG_ARTIST, mp3File.getId3v2Tag().getArtist());
                 map.put(TAG_TRACK, mp3File.getId3v2Tag().getTrack());
+                map.put(TAG_DURATION, mp3File.getLengthInSeconds()+"");
 
                 //if there's no album image assigned -> assign default image
                 if(mp3File.getId3v2Tag().getAlbumImage() == null){
@@ -253,8 +230,6 @@ public class Library {
                     map.put(TAG_ALBUM_IMAGE, mp3File.getId3v2Tag().getAlbumImage());
                 }
 
-                map.put(TAG_DURATION, "0:00");
-                //add duration
             }
         } catch (IOException | UnsupportedTagException | InvalidDataException e) {
             e.printStackTrace();
