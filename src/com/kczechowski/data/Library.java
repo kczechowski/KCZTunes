@@ -11,10 +11,12 @@ import com.kczechowski.utils.FilesUtils;
 import com.mpatric.mp3agic.InvalidDataException;
 import com.mpatric.mp3agic.Mp3File;
 import com.mpatric.mp3agic.UnsupportedTagException;
-import javafx.application.Platform;
-import javafx.scene.control.Alert;
+import org.apache.commons.io.FileUtils;
 
-import java.io.*;
+import java.io.File;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -23,8 +25,7 @@ import java.util.*;
 
 public class Library {
 
-    private List<File> resources; //All directories with music
-    private List<File> songsFiles;
+    private Set<File> resources; //All directories with music
 
     private List<ArtistModel> gArtists = null;
     private List<AlbumModel> gAlbums = null;
@@ -42,25 +43,34 @@ public class Library {
     public static final String TAG_ALBUM_IMAGE = "image";
     public static final Path NULL_ALBUM_IMAGE_PATH = Paths.get("res/nullAlbumImage.png");
 
-    public Library() {
-        resources = new ArrayList<>();
+    private Path loadedLibraryPath;
+
+    private boolean isLoaded = false;
+
+    public boolean isLoaded() {
+        return isLoaded;
     }
 
-    public void build(String outputPath){
+    public Library() {
+        resources = new HashSet<>();
+    }
 
+    public void build(String outputPath) throws IOException {
+
+        App.eventManager.onLibraryStartedBuilding();
+
+        List<File> songsFiles = new ArrayList<>();
         //Add all music files from all sources to list
         for(File file : resources){
-            songsFiles = FilesUtils.getMusicFilesInFolderIncludingSubfolders(file);
+            songsFiles.addAll(FilesUtils.getMusicFilesInFolderIncludingSubfolders(file));
         }
 
+        System.out.println(songsFiles.size() + " songs found.");
+
         //Create library directory and delete the old one
-        Path libraryOutputPath = Paths.get(outputPath + "library");
-        try {
-            FilesUtils.deleteDirectory(libraryOutputPath.toFile());
-            Files.createDirectories(libraryOutputPath);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        Path libraryOutputPath = Paths.get(outputPath + File.separator + "library");
+        FileUtils.deleteDirectory(libraryOutputPath.toFile());
+        Files.createDirectories(libraryOutputPath);
 
 /*        Example library.json file
         {
@@ -92,6 +102,10 @@ public class Library {
 
         for(File file : songsFiles){
 
+            //check if file has tags
+            if(!hasMP3FileProperTags(file))
+                continue;
+
             HashMap songTags = getTagsFromMP3File(file);
             String songName = (String) songTags.get(TAG_TITLE);
             String artistName = (String) songTags.get(TAG_ARTIST);
@@ -105,6 +119,8 @@ public class Library {
             String albumKey = artistKey + ">" + formatID(albumName);
             String songKey = albumKey + ">" + formatID(songName);
 
+            System.out.println("Adding \"" + songKey + "\" to library.");
+
             //Assign artists to map
             if(!artistModelHashMap.containsKey(artistKey)){
                 ArtistModel artistModel = new ArtistModel();
@@ -113,11 +129,7 @@ public class Library {
                 artistModelHashMap.put(artistKey, artistModel);
 
                 //Create directory for every artist
-                try {
-                    Files.createDirectory(Paths.get(libraryOutputPath + File.separator + artistKey));
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
+                Files.createDirectories(Paths.get(libraryOutputPath + File.separator + artistKey));
             }
 
             //Assign albums to map
@@ -129,11 +141,7 @@ public class Library {
                 albumModelHashMap.put(albumKey, albumModel);
 
                 //Create directory for every album
-                try {
-                    Files.createDirectory(Paths.get(libraryOutputPath + File.separator + artistKey + File.separator + formatID(albumName)));
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
+                Files.createDirectories(Paths.get(libraryOutputPath + File.separator + artistKey + File.separator + formatID(albumName)));
             }
 
             //Assign songs to map
@@ -144,21 +152,14 @@ public class Library {
                 SongModel songModel = new SongModel();
                 songModel.setSongName(songName);
                 songModel.setSongID(songKey);
-                songModel.setSongPath("library" + songTargetPath);
+                songModel.setSongPath(songTargetPath);
                 songModel.setSongTrack(songTrack);
                 songModel.setSongDuration(songDuration);
                 songModelHashMap.put(songKey, songModel);
 
                 //Copy every file from source to library directory
-                try {
-
-                    Files.copy(sourcePath, targetPath, StandardCopyOption.COPY_ATTRIBUTES);
-
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
+                Files.copy(sourcePath, targetPath, StandardCopyOption.REPLACE_EXISTING);
             }
-
         }
 
         //Save library.json file
@@ -170,21 +171,21 @@ public class Library {
         Gson gson = new Gson();
         String toSave = gson.toJson(libraryWrapper, LibraryWrapper.class);
 
-        try {
-            FileWriter fileWriter = new FileWriter(libraryOutputPath + File.separator + "library.json");
-            fileWriter.write(toSave);
-            fileWriter.close();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        FileWriter fileWriter = new FileWriter(libraryOutputPath + File.separator + "library.json");
+        fileWriter.write(toSave);
+        fileWriter.close();
+
+        App.eventManager.onLibraryBuilt();
 
     }
 
-    public void loadLibrary(Path path){
-        try {
-            JsonReader jsonReader = new JsonReader(new FileReader(path + "\\library.json"));
+    public void loadLibrary(Path path) throws IOException {
+            App.eventManager.onLibraryStartedLoading();
+            isLoaded = false;
+            JsonReader jsonReader = new JsonReader(new FileReader(path + File.separator + "library.json"));
             Gson gson = new Gson();
             LibraryWrapper wrapper = gson.fromJson(jsonReader, LibraryWrapper.class);
+            jsonReader.close();
             gArtists = wrapper.getArtists();
             gAlbums = wrapper.getAlbums();
             gSongs = wrapper.getSongs();
@@ -200,29 +201,36 @@ public class Library {
                 songModel.setArtist(artistModel);
                 songModel.setAlbum(albumModel);
             }
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-            Platform.runLater(new Runnable() {
-                @Override
-                public void run() {
-                    Alert alert = new Alert(Alert.AlertType.ERROR);
-                    alert.showAndWait();
-                }
-            });
 
-        }
+            this.loadedLibraryPath = path;
+            isLoaded = true;
+            App.eventManager.onLibraryLoaded();
     }
 
     public String formatID(String s){
         return s.replaceAll("\\s+", "_").toLowerCase();
     }
 
-    public void addResourceDirectory(File file){
-        resources.add(file);
+    public void addResourceDirectory(File... file){
+        resources.addAll(Arrays.asList(file));
     }
 
     public void removeResourceDirectory(File file){
         resources.remove(file);
+    }
+
+    public static boolean hasMP3FileProperTags(File file){
+        try {
+            Mp3File mp3File = new Mp3File(file);
+            if(!mp3File.hasId3v1Tag() || !mp3File.hasId3v2Tag())
+                return false;
+            else if(mp3File.getId3v2Tag().getTitle() == null || mp3File.getId3v2Tag().getAlbum() == null || mp3File.getId3v2Tag().getArtist() == null || mp3File.getId3v2Tag().getTrack() == null){
+                return false;
+            }
+        } catch (IOException | UnsupportedTagException | InvalidDataException e) {
+            return false;
+        }
+        return true;
     }
 
     public static HashMap<String, Object> getTagsFromMP3File(File file){
@@ -313,5 +321,15 @@ public class Library {
         return list;
     }
 
+    public Path getLoadedLibraryPath() {
+        return loadedLibraryPath;
+    }
 
+    public void dispose(){
+        isLoaded = false;
+        gSongs.clear();
+        gAlbums.clear();
+        gArtists.clear();
+        resources.clear();
+    }
 }

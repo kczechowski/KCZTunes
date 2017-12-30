@@ -1,24 +1,24 @@
 package com.kczechowski.handlers.player;
 
-import com.kczechowski.config.AppConfig;
 import com.kczechowski.data.models.SongModel;
 import com.kczechowski.listeners.MusicPlayerStatusChangeListener;
 import com.kczechowski.main.App;
 import javafx.scene.media.Media;
 import javafx.scene.media.MediaPlayer;
+import org.apache.commons.io.FileUtils;
 
 import java.io.File;
+import java.io.IOException;
 
 public class MusicPlayer {
     private MediaPlayer player;
-    private Media media;
+//    private Media media;
     private boolean isPlaying = false;
     private boolean isNullSong = true;
     private SongModel songModel;
-    private App app;
+//    private File songFile;
 
-    public MusicPlayer(App app) {
-        this.app = app;
+    public MusicPlayer() {
     }
 
     public void init(){
@@ -29,15 +29,25 @@ public class MusicPlayer {
         App.eventManager.addMusicPlayerStatusChangeListener(new MusicPlayerStatusChangeListener() {
             @Override
             public void onSongPlayRequest(SongModel song) {
-                if(!isNullSong)
+                if(!isNullSong) {
                     player.dispose();
-                String uriString = new File(AppConfig.DEFAULT_RES_DIRECTORY + song.getSongPath()).toURI().toString();
-                Media media = new Media(uriString);
-                player = new MediaPlayer(media);
-                isNullSong = false;
-                songModel = song;
-                onResume();
-                app.update();
+                }
+                try {
+                    File songFile = new File(App.library.getLoadedLibraryPath() + song.getSongPath());
+
+                    //copy file to temp file, so we can rebuild library w/o problems
+                    File tempSongFile = File.createTempFile("temp", ".tmp");
+                    tempSongFile.deleteOnExit();
+                    FileUtils.copyFile(songFile, tempSongFile);
+
+                    Media media = new Media(tempSongFile.toURI().toString());
+                    player = new MediaPlayer(media);
+                    isNullSong = false;
+                    songModel = song;
+                    onResume();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
             }
 
             @Override
@@ -55,6 +65,11 @@ public class MusicPlayer {
                     isPlaying = true;
                 }
             }
+
+            @Override
+            public void onDispose() {
+
+            }
         });
     }
 
@@ -68,5 +83,11 @@ public class MusicPlayer {
 
     public boolean isNullSong() {
         return isNullSong;
+    }
+
+    public void dispose(){
+        if(player!=null)
+            player.dispose();
+        App.eventManager.onMusicPlayerDispose();
     }
 }

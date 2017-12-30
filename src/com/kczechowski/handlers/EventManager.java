@@ -1,6 +1,7 @@
 package com.kczechowski.handlers;
 
 import com.kczechowski.data.models.SongModel;
+import com.kczechowski.listeners.LibraryStatusChangeListener;
 import com.kczechowski.listeners.MusicPlayerStatusChangeListener;
 import com.kczechowski.listeners.StateChangeListener;
 
@@ -10,10 +11,48 @@ import java.util.List;
 public class EventManager {
     public List<StateChangeListener> stateChangeListenerList;
     public List<MusicPlayerStatusChangeListener> musicPlayerStatusChangeListenerList;
+    public List<LibraryStatusChangeListener> libraryStatusChangeListenerList;
 
     public EventManager() {
-        stateChangeListenerList = new ArrayList<StateChangeListener>();
-        musicPlayerStatusChangeListenerList = new ArrayList<MusicPlayerStatusChangeListener>();
+        stateChangeListenerList = new ArrayList<>();
+        musicPlayerStatusChangeListenerList = new ArrayList<>();
+        libraryStatusChangeListenerList = new ArrayList<>();
+    }
+
+    public void onLibraryStartedBuilding(){
+        for(LibraryStatusChangeListener listener : libraryStatusChangeListenerList){
+            listener.onStartedBuilding();
+        }
+    }
+
+    public void onLibraryBuilt(){
+        for(LibraryStatusChangeListener listener : libraryStatusChangeListenerList){
+            listener.onBuilt();
+        }
+    }
+
+    public void onLibraryStartedLoading(){
+        for(LibraryStatusChangeListener listener : libraryStatusChangeListenerList){
+            listener.onStartedLoading();
+        }
+    }
+
+    public void onLibraryLoaded(){
+        for(LibraryStatusChangeListener listener : libraryStatusChangeListenerList){
+            listener.onLoaded();
+        }
+    }
+
+    public void onLibraryFailedToLoad(){
+        for(LibraryStatusChangeListener listener : libraryStatusChangeListenerList){
+            listener.onFailedToLoad();
+        }
+    }
+
+    public void onLibraryFailedToBuild(){
+        for(LibraryStatusChangeListener listener : libraryStatusChangeListenerList){
+            listener.onFailedToBuild();
+        }
     }
 
     public void stateChanged(){
@@ -40,6 +79,12 @@ public class EventManager {
         }
     }
 
+    public void onMusicPlayerDispose(){
+        for(MusicPlayerStatusChangeListener listener : musicPlayerStatusChangeListenerList){
+            listener.onDispose();
+        }
+    }
+
     public void addStateChangeListener(StateChangeListener listener){
         stateChangeListenerList.add(listener);
     }
@@ -54,6 +99,14 @@ public class EventManager {
 
     public void removeMusicPlayerStatusChangeListener(MusicPlayerStatusChangeListener listener){
         musicPlayerStatusChangeListenerList.remove(listener);
+    }
+
+    public void addLibraryStatusChangeListener(LibraryStatusChangeListener listener){
+        libraryStatusChangeListenerList.add(listener);
+    }
+
+    public void removeLibraryStatusChangeListener(LibraryStatusChangeListener listener){
+        libraryStatusChangeListenerList.remove(listener);
     }
 
 }

@@ -6,4 +6,5 @@ public interface MusicPlayerStatusChangeListener {
     void onSongPlayRequest(SongModel song);
     void onPause();
     void onResume();
+    void onDispose();
 }

@@ -1,6 +1,7 @@
 package com.kczechowski.utils;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -57,8 +58,8 @@ public class FilesUtils {
             return false;
     }
 
-    public static void deleteDirectory(File dir) {
-        File[] files = dir.listFiles();
+    public static void deleteDirectory(File dir) throws IOException {
+/*        File[] files = dir.listFiles();
         if(files!=null) {
             for(File f: files) {
                 if(f.isDirectory()) {
@@ -68,7 +69,21 @@ public class FilesUtils {
                 }
             }
         }
-        dir.delete();
+        dir.delete();*/
+
+/*        Files.walkFileTree(dir.toPath(), new SimpleFileVisitor<Path>() {
+            @Override
+            public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+                Files.delete(file);
+                return FileVisitResult.CONTINUE;
+            }
+
+            @Override
+            public FileVisitResult postVisitDirectory(Path dir, IOException exc) throws IOException {
+                Files.delete(dir);
+                return FileVisitResult.CONTINUE;
+            }
+        });*/
     }
 
     public static String getCleanFilePath(String path){
