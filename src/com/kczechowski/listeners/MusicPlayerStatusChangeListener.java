@@ -1,10 +1,8 @@
 package com.kczechowski.listeners;
 
-import com.kczechowski.data.models.SongModel;
-
 public interface MusicPlayerStatusChangeListener {
-    void onSongPlayRequest(SongModel song);
-    void onPause();
-    void onResume();
-    void onDispose();
+    void onSongPlayRequest(MusicPlayerStatusChangeEvent e);
+    void onPause(MusicPlayerStatusChangeEvent e);
+    void onResume(MusicPlayerStatusChangeEvent e);
+    void onDispose(MusicPlayerStatusChangeEvent e);
 }

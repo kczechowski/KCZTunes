@@ -1,9 +1,6 @@
 package com.kczechowski.handlers;
 
-import com.kczechowski.data.models.SongModel;
-import com.kczechowski.listeners.LibraryStatusChangeListener;
-import com.kczechowski.listeners.MusicPlayerStatusChangeListener;
-import com.kczechowski.listeners.StateChangeListener;
+import com.kczechowski.listeners.*;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -19,69 +16,21 @@ public class EventManager {
         libraryStatusChangeListenerList = new ArrayList<>();
     }
 
-    public void onLibraryStartedBuilding(){
-        for(LibraryStatusChangeListener listener : libraryStatusChangeListenerList){
-            listener.onStartedBuilding();
-        }
-    }
-
-    public void onLibraryBuilt(){
-        for(LibraryStatusChangeListener listener : libraryStatusChangeListenerList){
-            listener.onBuilt();
-        }
-    }
-
-    public void onLibraryStartedLoading(){
-        for(LibraryStatusChangeListener listener : libraryStatusChangeListenerList){
-            listener.onStartedLoading();
-        }
-    }
-
-    public void onLibraryLoaded(){
-        for(LibraryStatusChangeListener listener : libraryStatusChangeListenerList){
-            listener.onLoaded();
-        }
-    }
-
-    public void onLibraryFailedToLoad(){
-        for(LibraryStatusChangeListener listener : libraryStatusChangeListenerList){
-            listener.onFailedToLoad();
-        }
-    }
-
-    public void onLibraryFailedToBuild(){
-        for(LibraryStatusChangeListener listener : libraryStatusChangeListenerList){
-            listener.onFailedToBuild();
-        }
-    }
-
-    public void stateChanged(){
-        for(StateChangeListener state : stateChangeListenerList){
-            state.onStateChange();
-        }
-    }
-
-    public void onSongPlayRequest(SongModel song){
+    public void fireMusicPlayerChangeEvent(MusicPlayerStatusChangeEvent event){
         for(MusicPlayerStatusChangeListener listener : musicPlayerStatusChangeListenerList){
-            listener.onSongPlayRequest(song);
+            event.dispatch(listener);
         }
     }
 
-    public void onPause(){
-        for(MusicPlayerStatusChangeListener listener : musicPlayerStatusChangeListenerList){
-            listener.onPause();
+    public void fireLibraryStatusChangeEvent(LibraryStatusChangeEvent event){
+        for(LibraryStatusChangeListener listener : libraryStatusChangeListenerList){
+            event.dispatch(listener);
         }
     }
 
-    public void onResume(){
-        for(MusicPlayerStatusChangeListener listener : musicPlayerStatusChangeListenerList){
-            listener.onResume();
-        }
-    }
-
-    public void onMusicPlayerDispose(){
-        for(MusicPlayerStatusChangeListener listener : musicPlayerStatusChangeListenerList){
-            listener.onDispose();
+    public void fireStateChangeEvent(StateChangeEvent event){
+        for(StateChangeListener listener : stateChangeListenerList){
+            event.dispatch(listener);
         }
     }
 

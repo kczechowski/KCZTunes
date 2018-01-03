@@ -1,5 +1,6 @@
 package com.kczechowski.handlers;
 
+import com.kczechowski.listeners.StateChangeEvent;
 import com.kczechowski.main.App;
 import com.kczechowski.states.NullState;
 import com.kczechowski.states.State;
@@ -17,7 +18,7 @@ public class StateManager {
     public void pushState(State state){
         state.init();
         stateStack.push(state);
-        App.eventManager.stateChanged();
+        App.eventManager.fireStateChangeEvent(new StateChangeEvent(this, StateChangeEvent.STATE_CHANGED));
     }
 
     public State peekState(){
@@ -36,7 +37,7 @@ public class StateManager {
         State temp = stateStack.peek();
         temp.dispose();
         stateStack.pop();
-        App.eventManager.stateChanged();
+        App.eventManager.fireStateChangeEvent(new StateChangeEvent(this, StateChangeEvent.STATE_CHANGED));
     }
 
     public void printStateList(){

@@ -3,6 +3,7 @@ package com.kczechowski.states;
 import com.kczechowski.config.keys.BundleKeys;
 import com.kczechowski.data.models.SongModel;
 import com.kczechowski.handlers.StateManager;
+import com.kczechowski.listeners.MusicPlayerStatusChangeEvent;
 import com.kczechowski.main.App;
 import javafx.application.Platform;
 import javafx.collections.FXCollections;
@@ -25,7 +26,6 @@ public class AlbumState extends State {
         Button backButton = new Button("<");
         backButton.setOnAction(event -> {
             stateManager.popState();
-            App.eventManager.stateChanged();
         });
         Label artistName = new Label();
         Label albumName = new Label();
@@ -38,7 +38,8 @@ public class AlbumState extends State {
 
         listView.getSelectionModel().selectedIndexProperty().addListener((observable, oldValue, newValue) -> {
             SongModel songModel = (SongModel) list.get(newValue.intValue());
-            App.eventManager.onSongPlayRequest(songModel);
+            /*App.eventManager.onSongPlayRequest(songModel);*/
+            App.eventManager.fireMusicPlayerChangeEvent(new MusicPlayerStatusChangeEvent(this, MusicPlayerStatusChangeEvent.SONG_PLAY_REQUEST, songModel));
         });
 
         VBox vBox = new VBox();

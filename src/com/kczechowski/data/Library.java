@@ -6,6 +6,7 @@ import com.kczechowski.data.models.AlbumModel;
 import com.kczechowski.data.models.ArtistModel;
 import com.kczechowski.data.models.LibraryWrapper;
 import com.kczechowski.data.models.SongModel;
+import com.kczechowski.listeners.LibraryStatusChangeEvent;
 import com.kczechowski.main.App;
 import com.kczechowski.utils.FilesUtils;
 import com.mpatric.mp3agic.InvalidDataException;
@@ -56,8 +57,7 @@ public class Library {
     }
 
     public void build(String outputPath) throws IOException {
-
-        App.eventManager.onLibraryStartedBuilding();
+        App.eventManager.fireLibraryStatusChangeEvent(new LibraryStatusChangeEvent(this, LibraryStatusChangeEvent.STARTED_BUILDING));
 
         List<File> songsFiles = new ArrayList<>();
         //Add all music files from all sources to list
@@ -151,12 +151,12 @@ public class Library {
         fileWriter.write(toSave);
         fileWriter.close();
 
-        App.eventManager.onLibraryBuilt();
+        App.eventManager.fireLibraryStatusChangeEvent(new LibraryStatusChangeEvent(this, LibraryStatusChangeEvent.FINISHED_BUILDING));
 
     }
 
     public void loadLibrary(Path path) throws IOException {
-            App.eventManager.onLibraryStartedLoading();
+            App.eventManager.fireLibraryStatusChangeEvent(new LibraryStatusChangeEvent(this, LibraryStatusChangeEvent.STARTED_LOADING));
             isLoaded = false;
             JsonReader jsonReader = new JsonReader(new FileReader(path + File.separator + "library.json"));
             Gson gson = new Gson();
@@ -180,7 +180,8 @@ public class Library {
 
             this.loadedLibraryPath = path;
             isLoaded = true;
-            App.eventManager.onLibraryLoaded();
+        App.eventManager.fireLibraryStatusChangeEvent(new LibraryStatusChangeEvent(this, LibraryStatusChangeEvent.FINISHED_LOADING));
+
     }
 
     public String formatID(String s){

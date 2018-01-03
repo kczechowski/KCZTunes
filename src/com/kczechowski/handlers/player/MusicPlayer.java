@@ -1,6 +1,7 @@
 package com.kczechowski.handlers.player;
 
 import com.kczechowski.data.models.SongModel;
+import com.kczechowski.listeners.MusicPlayerStatusChangeEvent;
 import com.kczechowski.listeners.MusicPlayerStatusChangeListener;
 import com.kczechowski.main.App;
 import javafx.scene.media.Media;
@@ -27,12 +28,14 @@ public class MusicPlayer {
 
     private void setListeners(){
         App.eventManager.addMusicPlayerStatusChangeListener(new MusicPlayerStatusChangeListener() {
+
             @Override
-            public void onSongPlayRequest(SongModel song) {
+            public void onSongPlayRequest(MusicPlayerStatusChangeEvent event) {
                 if(!isNullSong) {
                     player.dispose();
                 }
                 try {
+                    SongModel song = event.getNewSong();
                     File songFile = new File(App.library.getLoadedLibraryPath() + song.getSongPath());
 
                     //copy file to temp file, so we can rebuild library w/o problems
@@ -44,14 +47,14 @@ public class MusicPlayer {
                     player = new MediaPlayer(media);
                     isNullSong = false;
                     songModel = song;
-                    onResume();
+                    onResume(null);//FIX
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
             }
 
             @Override
-            public void onPause() {
+            public void onPause(MusicPlayerStatusChangeEvent event) {
                 if(!isNullSong){
                     player.pause();
                     isPlaying = false;
@@ -59,7 +62,7 @@ public class MusicPlayer {
             }
 
             @Override
-            public void onResume() {
+            public void onResume(MusicPlayerStatusChangeEvent event) {
                 if(!isNullSong){
                     player.play();
                     isPlaying = true;
@@ -67,7 +70,7 @@ public class MusicPlayer {
             }
 
             @Override
-            public void onDispose() {
+            public void onDispose(MusicPlayerStatusChangeEvent e) {
 
             }
         });
@@ -88,6 +91,7 @@ public class MusicPlayer {
     public void dispose(){
         if(player!=null)
             player.dispose();
-        App.eventManager.onMusicPlayerDispose();
+        App.eventManager.fireMusicPlayerChangeEvent(new MusicPlayerStatusChangeEvent(this,MusicPlayerStatusChangeEvent.DISPOSE_REQUEST));
+//        App.eventManager.onMusicPlayerDispose();
     }
 }

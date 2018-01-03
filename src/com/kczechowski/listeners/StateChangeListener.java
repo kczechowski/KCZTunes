@@ -1,5 +1,5 @@
 package com.kczechowski.listeners;
 
 public interface StateChangeListener {
-    void onStateChange();
+    void onStateChange(StateChangeEvent event);
 }

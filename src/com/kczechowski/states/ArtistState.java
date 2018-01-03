@@ -25,7 +25,6 @@ public class ArtistState extends State {
         Button backButton = new Button("<");
         backButton.setOnAction(event -> {
             stateManager.popState();
-            App.eventManager.stateChanged();
         });
         Text text = new Text("Display all albums");
 

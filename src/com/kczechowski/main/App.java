@@ -6,9 +6,7 @@ import com.kczechowski.data.models.SongModel;
 import com.kczechowski.handlers.EventManager;
 import com.kczechowski.handlers.StateManager;
 import com.kczechowski.handlers.player.MusicPlayer;
-import com.kczechowski.listeners.LibraryStatusChangeListener;
-import com.kczechowski.listeners.MusicPlayerStatusChangeListener;
-import com.kczechowski.listeners.StateChangeListener;
+import com.kczechowski.listeners.*;
 import com.kczechowski.states.ArtistsListState;
 import com.kczechowski.states.NullState;
 import javafx.application.Application;
@@ -57,7 +55,6 @@ public class App extends Application {
 
     @Override
     public void start(Stage primaryStage) throws Exception {
-
         eventManager = new EventManager();
         stateManager = new StateManager();
         musicPlayer = new MusicPlayer();
@@ -84,6 +81,8 @@ public class App extends Application {
         primaryStage.show();
 
         setListeners();
+
+        eventManager.fireMusicPlayerChangeEvent(new MusicPlayerStatusChangeEvent(this, MusicPlayerStatusChangeEvent.RESUME));
     }
 
     public Pane getMain(){
@@ -136,9 +135,10 @@ public class App extends Application {
     public ToolBar getControlBar(){
         ToolBar toolBar = new ToolBar();
         Button btnPlay = new Button("Play");
-        btnPlay.setOnAction(event -> App.eventManager.onResume());
+        btnPlay.setOnAction(event -> App.eventManager.fireMusicPlayerChangeEvent(new MusicPlayerStatusChangeEvent(this, MusicPlayerStatusChangeEvent.RESUME)));
         Button btnPause = new Button("Pause");
-        btnPause.setOnAction(event -> App.eventManager.onPause());
+        btnPause. setOnAction(event -> App.eventManager.fireMusicPlayerChangeEvent(new MusicPlayerStatusChangeEvent(this, MusicPlayerStatusChangeEvent.PAUSE)));
+
         ImageView imageView = new ImageView();
         imageView.setFitWidth(64);
         imageView.setPreserveRatio(true);
@@ -160,7 +160,7 @@ public class App extends Application {
 
         App.eventManager.addMusicPlayerStatusChangeListener(new MusicPlayerStatusChangeListener() {
             @Override
-            public void onSongPlayRequest(SongModel song) {
+            public void onSongPlayRequest(MusicPlayerStatusChangeEvent e) {
                 Platform.runLater(()->{
                     SongModel loadedSong = musicPlayer.getLoadedSong();
                     title.setText(loadedSong.getSongName());
@@ -172,17 +172,17 @@ public class App extends Application {
             }
 
             @Override
-            public void onPause() {
+            public void onPause(MusicPlayerStatusChangeEvent e) {
 
             }
 
             @Override
-            public void onResume() {
+            public void onResume(MusicPlayerStatusChangeEvent e) {
 
             }
 
             @Override
-            public void onDispose() {
+            public void onDispose(MusicPlayerStatusChangeEvent e) {
                 Platform.runLater(()->{
                     title.setText("");
                     artist.setText("");
@@ -278,7 +278,7 @@ public class App extends Application {
                     } catch (IOException e1) {
                         Platform.runLater(()->{
                             App.showError(e1);
-                            eventManager.onLibraryFailedToBuild();
+                            App.eventManager.fireLibraryStatusChangeEvent(new LibraryStatusChangeEvent(this, LibraryStatusChangeEvent.FAILED_TO_BUILD));
                         });
                     }
 
@@ -311,25 +311,31 @@ public class App extends Application {
         libraryGroup.setVisible(false);
         App.eventManager.addLibraryStatusChangeListener(new LibraryStatusChangeListener() {
             @Override
-            public void onStartedBuilding() {
+            public void onStartedBuilding(LibraryStatusChangeEvent event) {
                 Platform.runLater(()->{
                     libraryGroup.setVisible(false);
                 });
             }
 
             @Override
-            public void onBuilt() {
+            public void onFinishedBuilding(LibraryStatusChangeEvent event) {
+
             }
 
             @Override
-            public void onStartedLoading() {
+            public void onFailedToBuild(LibraryStatusChangeEvent event) {
+
+            }
+
+            @Override
+            public void onStartedLoading(LibraryStatusChangeEvent event) {
                 Platform.runLater(()->{
                     libraryGroup.setVisible(false);
                 });
             }
 
             @Override
-            public void onLoaded() {
+            public void onFinishedLoading(LibraryStatusChangeEvent event) {
                 Platform.runLater(()->{
                     libraryPathLabel.setText(library.getLoadedLibraryPath().toString());
                     libraryGroup.setVisible(true);
@@ -337,12 +343,7 @@ public class App extends Application {
             }
 
             @Override
-            public void onFailedToBuild() {
-
-            }
-
-            @Override
-            public void onFailedToLoad() {
+            public void onFailedToLoad(LibraryStatusChangeEvent event) {
 
             }
         });
@@ -358,7 +359,7 @@ public class App extends Application {
     private void setListeners(){
         App.eventManager.addStateChangeListener(new StateChangeListener() {
             @Override
-            public void onStateChange() {
+            public void onStateChange(StateChangeEvent event) {
                 Platform.runLater(()->{
                     borderPane.setCenter(getMain());
                 });
@@ -367,8 +368,7 @@ public class App extends Application {
 
         App.eventManager.addLibraryStatusChangeListener(new LibraryStatusChangeListener() {
             @Override
-            public void onStartedBuilding() {
-//                stateManager.setState(new BuildLibraryState(stateManager));
+            public void onStartedBuilding(LibraryStatusChangeEvent event) {
                 Platform.runLater(()->{
                     dialog = new Alert(Alert.AlertType.INFORMATION);
                     dialog.setContentText("Building library. Please wait...");
@@ -377,7 +377,7 @@ public class App extends Application {
             }
 
             @Override
-            public void onBuilt() {
+            public void onFinishedBuilding(LibraryStatusChangeEvent event) {
 
                 Platform.runLater(()->{
                     if(dialog!=null){
@@ -398,7 +398,7 @@ public class App extends Application {
             }
 
             @Override
-            public void onStartedLoading() {
+            public void onStartedLoading(LibraryStatusChangeEvent event) {
                 Platform.runLater(()->{
                     dialog = new Alert(Alert.AlertType.INFORMATION);
                     dialog.setContentText("Loading library. Please wait...");
@@ -407,7 +407,7 @@ public class App extends Application {
             }
 
             @Override
-            public void onLoaded() {
+            public void onFinishedLoading(LibraryStatusChangeEvent event) {
                 Platform.runLater(()->{
                     if(dialog!=null){
                         dialog.close();
@@ -417,14 +417,15 @@ public class App extends Application {
             }
 
             @Override
-            public void onFailedToBuild() {
-                stateManager.setState(new NullState(stateManager));
+            public void onFailedToLoad(LibraryStatusChangeEvent event) {
+
             }
 
             @Override
-            public void onFailedToLoad() {
-
+            public void onFailedToBuild(LibraryStatusChangeEvent event) {
+                stateManager.setState(new NullState(stateManager));
             }
+
         });
     }
 
