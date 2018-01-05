@@ -12,14 +12,25 @@ public class LibraryStatusChangeEvent extends EventObject{
     public static final int FAILED_TO_LOAD = 5;
 
     private int type;
+    private Exception exception;
 
     public LibraryStatusChangeEvent(Object source, int type) {
         super(source);
         this.type = type;
     }
 
+    public LibraryStatusChangeEvent(Object source, int type, Exception e) {
+        super(source);
+        this.type = type;
+        this.exception = e;
+    }
+
     public int getType() {
         return type;
+    }
+
+    public Exception getException() {
+        return exception;
     }
 
     public void dispatch(LibraryStatusChangeListener listener){

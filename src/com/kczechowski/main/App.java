@@ -8,43 +8,35 @@ import com.kczechowski.handlers.StateManager;
 import com.kczechowski.handlers.player.MusicPlayer;
 import com.kczechowski.listeners.*;
 import com.kczechowski.states.ArtistsListState;
+import com.kczechowski.states.BuildLibraryState;
+import com.kczechowski.states.LoadLibraryState;
 import com.kczechowski.states.NullState;
 import javafx.application.Application;
 import javafx.application.Platform;
-import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
-import javafx.geometry.Insets;
-import javafx.geometry.Orientation;
+import javafx.fxml.FXMLLoader;
+import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
+import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.BorderPane;
-import javafx.scene.layout.HBox;
 import javafx.scene.layout.Pane;
-import javafx.scene.layout.VBox;
-import javafx.scene.media.MediaPlayer;
-import javafx.scene.text.Font;
-import javafx.stage.DirectoryChooser;
 import javafx.stage.Stage;
 
 import java.io.ByteArrayInputStream;
 import java.io.File;
-import java.io.IOException;
 import java.nio.file.Paths;
 
 public class App extends Application {
 
-    private BorderPane borderPane;
-
-    private MediaPlayer player;
-
     public static EventManager eventManager;
     public static Library library;
     private StateManager stateManager;
-    private MusicPlayer musicPlayer;
-    private DirectoryChooser directoryChooser;
-    private Stage stage;
+    private static MusicPlayer musicPlayer;
+    private static Stage primaryStage;
+    private static Scene primaryScene;
     private ObservableList resourcesList;
     private String outputPath = "";
     private Dialog dialog;
@@ -60,16 +52,15 @@ public class App extends Application {
         musicPlayer = new MusicPlayer();
         musicPlayer.init();
         library = new Library();
-        directoryChooser = new DirectoryChooser();
-        this.stage = primaryStage;
+        this.primaryStage = primaryStage;
 
-        borderPane = new BorderPane();
-        borderPane.setTop(getMenuBar());
-        borderPane.setLeft(getSideMenu());
-        borderPane.setCenter(getMain());
-        borderPane.setBottom(getControlBar());
+        //Load app layout from file
+        FXMLLoader fxmlLoader = new FXMLLoader();
+        fxmlLoader.setLocation(this.getClass().getResource("/com/kczechowski/gui/MainLayout.fxml"));
 
-        Scene scene = new Scene(borderPane, 800, 600);
+        BorderPane borderPane = fxmlLoader.load();
+
+        primaryScene = new Scene(borderPane, 800, 600);
         primaryStage.setTitle(AppConfig.DEFAULT_TITLE);
         primaryStage.setOnCloseRequest(event -> {
             Platform.exit();
@@ -77,121 +68,25 @@ public class App extends Application {
         });
         primaryStage.setMinWidth(800);
         primaryStage.setMinHeight(600);
-        primaryStage.setScene(scene);
+        primaryStage.setScene(primaryScene);
         primaryStage.show();
 
         setListeners();
+        setButtonActions();
+        updateLayout();
 
         eventManager.fireMusicPlayerChangeEvent(new MusicPlayerStatusChangeEvent(this, MusicPlayerStatusChangeEvent.RESUME));
     }
 
-    public Pane getMain(){
-        return stateManager.peekState().getContent();
+    private void updateLayout(){
+        BorderPane borderPane = (BorderPane) primaryScene.lookup("#MainLayout");
+        Pane centerPane = (Pane) borderPane.lookup("#MainLayoutCenter");
+        centerPane.getChildren().clear();
+        centerPane.getChildren().addAll(getTopStateContent());
     }
 
-    public MenuBar getMenuBar(){
-        MenuBar menuBar = new MenuBar();
-
-        Menu btnFile = new Menu("File");
-
-        MenuItem btnLoadLibrary = new MenuItem("Load library");
-        btnLoadLibrary.setOnAction(event -> {
-            File dir = directoryChooser.showDialog(stage);
-            if(dir != null){
-                Thread loadLibraryThread = new Thread(()->{
-                    if(library.isLoaded()) {
-                        musicPlayer.dispose();
-                        library.dispose();
-                        stateManager.setState(new NullState(stateManager));
-                    }
-                    try {
-                        library.loadLibrary(dir.toPath());
-                    } catch (IOException e) {
-                        Platform.runLater(()->{
-                            showError(e);
-                        });
-                    }
-                });
-                loadLibraryThread.start();
-            }
-        });
-        btnFile.getItems().addAll(btnLoadLibrary);
-
-        Menu btnEdit = new Menu("Edit");
-
-        Menu btnHelp = new Menu("Help");
-        MenuItem btnInfo = new MenuItem("About");
-        btnHelp.getItems().addAll(btnInfo);
-
-        menuBar.getMenus().addAll(btnFile, btnEdit, btnHelp);
-        menuBar.setPadding(new Insets(0,0,0,0));
-        return menuBar;
-    }
-
-    public void update(){
-        borderPane.setBottom(getControlBar());
-    }
-
-    public ToolBar getControlBar(){
-        ToolBar toolBar = new ToolBar();
-        Button btnPlay = new Button("Play");
-        btnPlay.setOnAction(event -> App.eventManager.fireMusicPlayerChangeEvent(new MusicPlayerStatusChangeEvent(this, MusicPlayerStatusChangeEvent.RESUME)));
-        Button btnPause = new Button("Pause");
-        btnPause. setOnAction(event -> App.eventManager.fireMusicPlayerChangeEvent(new MusicPlayerStatusChangeEvent(this, MusicPlayerStatusChangeEvent.PAUSE)));
-
-        ImageView imageView = new ImageView();
-        imageView.setFitWidth(64);
-        imageView.setPreserveRatio(true);
-        imageView.setSmooth(true);
-        imageView.setCache(true);
-
-        VBox smallSongInfoBox = new VBox();
-        Label title = new Label();
-        Label artist = new Label();
-        Label album = new Label();
-        smallSongInfoBox.getChildren().addAll(title, album, artist);
-
-        HBox bigSongInfoBox = new HBox();
-        bigSongInfoBox.setPrefWidth(200);
-        bigSongInfoBox.getChildren().addAll(imageView, smallSongInfoBox);
-
-        toolBar.getItems().addAll(bigSongInfoBox, btnPlay, btnPause);
-        toolBar.setOrientation(Orientation.HORIZONTAL);
-
-        App.eventManager.addMusicPlayerStatusChangeListener(new MusicPlayerStatusChangeListener() {
-            @Override
-            public void onSongPlayRequest(MusicPlayerStatusChangeEvent e) {
-                Platform.runLater(()->{
-                    SongModel loadedSong = musicPlayer.getLoadedSong();
-                    title.setText(loadedSong.getSongName());
-                    artist.setText(loadedSong.getArtist().getArtistName());
-                    album.setText(loadedSong.getAlbum().getAlbumName());
-                    Image image = new Image(new ByteArrayInputStream(loadedSong.getAlbum().getAlbumImage()));
-                    imageView.setImage(image);
-                });
-            }
-
-            @Override
-            public void onPause(MusicPlayerStatusChangeEvent e) {
-
-            }
-
-            @Override
-            public void onResume(MusicPlayerStatusChangeEvent e) {
-
-            }
-
-            @Override
-            public void onDispose(MusicPlayerStatusChangeEvent e) {
-                Platform.runLater(()->{
-                    title.setText("");
-                    artist.setText("");
-                    album.setText("");
-                    imageView.setImage(null);
-                });
-            }
-        });
-        return toolBar;
+    private Node getTopStateContent(){
+        return stateManager.peekState().getView();
     }
 
     public static void showError(Throwable e) {
@@ -210,150 +105,33 @@ public class App extends Application {
         });
     }
 
-    public ScrollPane getSideMenu(){
-        ScrollPane scrollPane = new ScrollPane();
+    private void setButtonActions(){
 
-        VBox vbox = new VBox();
-        vbox.setPrefWidth(200);
+        //sidemenu buttons
+        ScrollPane scrollPane = (ScrollPane) primaryScene.lookup("#SideMenu");
 
-        Label textFieldLabel = new Label("Output library path");
+        Button loadLibraryButton = (Button) scrollPane.lookup("#SideMenu_LoadLibraryButton");
+        loadLibraryButton.setOnAction(event -> stateManager.setState(new LoadLibraryState(stateManager)));
 
-        TextField outputPathField = new TextField();
-        outputPathField.setEditable(false);
-        Button outputFileButton = new Button("Set");
-        outputFileButton.setOnAction(event -> {
-            File dir = directoryChooser.showDialog(stage);
-            if(dir != null){
-                outputPathField.setText(dir.getAbsolutePath());
-                outputPath = dir.getAbsolutePath();
-            }
-        });
+        Button buildLibraryButton = (Button) scrollPane.lookup("#SideMenu_BuildLibraryButton");
+        buildLibraryButton.setOnAction(event -> stateManager.setState(new BuildLibraryState(stateManager)));
 
-        HBox outputBox = new HBox();
-        outputBox.getChildren().addAll(outputFileButton, outputPathField);
+        Button albumsButton = (Button) scrollPane.lookup("#SideMenu_LoadedLibraryAlbumsButton");
+        albumsButton.setOnAction(event -> stateManager.pushState(new ArtistsListState(stateManager)));
 
-        Label resources = new Label("Resources");
+        Button artistsButton = (Button) scrollPane.lookup("#SideMenu_LoadedLibraryArtistsButton");
+        artistsButton.setOnAction(event -> stateManager.pushState(new ArtistsListState(stateManager)));
 
-        resourcesList = FXCollections.observableArrayList();
-        ListView resourcesListView = new ListView();
-        resourcesListView.setPrefHeight(100);
-        resourcesListView.setItems(resourcesList);
+        Button songsButton = (Button) scrollPane.lookup("#SideMenu_LoadedLibrarySongsButton");
+        songsButton.setOnAction(event -> stateManager.pushState(new ArtistsListState(stateManager)));
 
-        Button btnAddResources = new Button("Add");
-        btnAddResources.setOnAction(event -> {
-            File dir = directoryChooser.showDialog(stage);
-            if(dir != null){
-                resourcesList.add(dir);
-            }
-        });
+        //controlbar buttons
+        ToolBar toolBar = (ToolBar) primaryScene.lookup("#ControlBarToolBar");
+        Button resumeSongButton = (Button) toolBar.lookup("#ControlBarResumeButton");
+        resumeSongButton.setOnAction(event -> App.eventManager.fireMusicPlayerChangeEvent(new MusicPlayerStatusChangeEvent(this, MusicPlayerStatusChangeEvent.RESUME)));
+        Button pauseSongButton = (Button) toolBar.lookup("#ControlBarPauseButton");
+        pauseSongButton.setOnAction(event -> App.eventManager.fireMusicPlayerChangeEvent(new MusicPlayerStatusChangeEvent(this, MusicPlayerStatusChangeEvent.PAUSE)));
 
-        Button btnRemResources = new Button("Remove");
-        btnRemResources.setOnAction(event -> {
-            if(!resourcesListView.getSelectionModel().isEmpty())
-                resourcesList.remove(resourcesListView.getSelectionModel().getSelectedIndex());
-        });
-
-        Button buildBtn = new Button("Build");
-        buildBtn.setOnAction(e -> {
-            if(resourcesList.size()==0) {
-                showError(null, "No resources added.");
-            }else {
-                buildBtn.setDisable(true);
-                Thread buildingLibraryThread = new Thread(() -> {
-                    //dispose objects if library was loaded previously
-                    if (library.isLoaded()) {
-                        musicPlayer.dispose();
-                        library.dispose();
-                    }
-
-                    resourcesList.forEach(r -> library.addResourceDirectory((File) r));
-                    try {
-                        if(outputPath != "")
-                            library.build(outputPath);
-                        else{
-                            Platform.runLater(()->{
-                                App.showError(null, "No output path set.");
-                            });
-                        }
-                    } catch (IOException e1) {
-                        Platform.runLater(()->{
-                            App.showError(e1);
-                            App.eventManager.fireLibraryStatusChangeEvent(new LibraryStatusChangeEvent(this, LibraryStatusChangeEvent.FAILED_TO_BUILD));
-                        });
-                    }
-
-                    Platform.runLater(() -> {
-                        buildBtn.setDisable(false);
-                    });
-                });
-
-                buildingLibraryThread.start();
-            }
-        });
-
-        HBox resourcesBox = new HBox();
-        resourcesBox.getChildren().addAll(btnAddResources, btnRemResources, buildBtn);
-
-        vbox.getChildren().addAll(textFieldLabel, outputBox, resources, resourcesListView, resourcesBox);
-
-        VBox libraryGroup = new VBox();
-
-        Label libraryLabel = new Label("Loaded library");
-        libraryLabel.setFont(Font.font(16));
-
-        Label libraryPathLabel = new Label();
-        libraryPathLabel.setFont(Font.font(10));
-
-        Button artistsBtn = new Button("Artists");
-        artistsBtn.setOnAction(event -> stateManager.pushState(new ArtistsListState(stateManager)));
-
-        libraryGroup.getChildren().addAll(libraryLabel, libraryPathLabel, artistsBtn);
-        libraryGroup.setVisible(false);
-        App.eventManager.addLibraryStatusChangeListener(new LibraryStatusChangeListener() {
-            @Override
-            public void onStartedBuilding(LibraryStatusChangeEvent event) {
-                Platform.runLater(()->{
-                    libraryGroup.setVisible(false);
-                });
-            }
-
-            @Override
-            public void onFinishedBuilding(LibraryStatusChangeEvent event) {
-
-            }
-
-            @Override
-            public void onFailedToBuild(LibraryStatusChangeEvent event) {
-
-            }
-
-            @Override
-            public void onStartedLoading(LibraryStatusChangeEvent event) {
-                Platform.runLater(()->{
-                    libraryGroup.setVisible(false);
-                });
-            }
-
-            @Override
-            public void onFinishedLoading(LibraryStatusChangeEvent event) {
-                Platform.runLater(()->{
-                    libraryPathLabel.setText(library.getLoadedLibraryPath().toString());
-                    libraryGroup.setVisible(true);
-                });
-            }
-
-            @Override
-            public void onFailedToLoad(LibraryStatusChangeEvent event) {
-
-            }
-        });
-
-        vbox.getChildren().addAll(libraryGroup);
-
-        scrollPane.setContent(vbox);
-        scrollPane.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
-        scrollPane.setVbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
-        return scrollPane;
     }
 
     private void setListeners(){
@@ -361,12 +139,17 @@ public class App extends Application {
             @Override
             public void onStateChange(StateChangeEvent event) {
                 Platform.runLater(()->{
-                    borderPane.setCenter(getMain());
+                    updateLayout();
                 });
             }
         });
 
         App.eventManager.addLibraryStatusChangeListener(new LibraryStatusChangeListener() {
+
+            ScrollPane scrollPane = (ScrollPane) primaryScene.lookup("#SideMenu");
+            Label label = (Label) scrollPane.lookup("#SideMenu_LoadedLibraryPath");
+            AnchorPane libraryGroup = (AnchorPane) scrollPane.lookup("#SideMenu_LoadedLibraryContentGroup");
+
             @Override
             public void onStartedBuilding(LibraryStatusChangeEvent event) {
                 Platform.runLater(()->{
@@ -378,7 +161,6 @@ public class App extends Application {
 
             @Override
             public void onFinishedBuilding(LibraryStatusChangeEvent event) {
-
                 Platform.runLater(()->{
                     if(dialog!=null){
                         dialog.close();
@@ -387,12 +169,13 @@ public class App extends Application {
                 });
 
                 Thread loadLibraryThread = new Thread(()->{
-                    stateManager.setState(new NullState(stateManager));
-                    try {
-                        library.loadLibrary(Paths.get( outputPath + File.separator + "library"));
-                    } catch (IOException e) {
-                        showError(e);
+                    if(library.isLoaded()) {
+                        musicPlayer.dispose();
+                        library.dispose();
+                        stateManager.setState(new NullState(stateManager));
                     }
+                    stateManager.setState(new NullState(stateManager));
+                    library.loadLibrary(Paths.get( library.getLastBuiltLibraryPath() + File.separator + "library"));
                 });
                 loadLibraryThread.start();
             }
@@ -400,33 +183,105 @@ public class App extends Application {
             @Override
             public void onStartedLoading(LibraryStatusChangeEvent event) {
                 Platform.runLater(()->{
+                    label.setText("(none)");
+                    libraryGroup.setDisable(true);
+
                     dialog = new Alert(Alert.AlertType.INFORMATION);
                     dialog.setContentText("Loading library. Please wait...");
                     dialog.showAndWait();
                 });
+
             }
 
             @Override
             public void onFinishedLoading(LibraryStatusChangeEvent event) {
                 Platform.runLater(()->{
+                    label.setText(library.getLoadedLibraryPath().toString());
+                    libraryGroup.setDisable(false);
                     if(dialog!=null){
                         dialog.close();
                         dialog = null;
                     }
+                    stateManager.setState(new NullState(stateManager));
                 });
             }
 
             @Override
             public void onFailedToLoad(LibraryStatusChangeEvent event) {
-
+                Platform.runLater(()->{
+                    showError(event.getException());
+                });
             }
 
             @Override
             public void onFailedToBuild(LibraryStatusChangeEvent event) {
                 stateManager.setState(new NullState(stateManager));
+                Platform.runLater(()->{
+                    App.showError(event.getException());
+                });
             }
 
         });
+
+        App.eventManager.addMusicPlayerStatusChangeListener(new MusicPlayerStatusChangeListener() {
+
+            ToolBar toolBar = (ToolBar) primaryScene.lookup("#ControlBarToolBar");
+            ImageView albumImageView = (ImageView) toolBar.lookup("#ControlBarAlbumImageView");
+            Label titleLabel = (Label) toolBar.lookup("#ControlBarSongName");
+            Label albumLabel = (Label) toolBar.lookup("#ControlBarAlbumName");
+            Label artistLabel = (Label) toolBar.lookup("#ControlBarArtistName");
+
+            @Override
+            public void onSongPlayRequest(MusicPlayerStatusChangeEvent e) {
+                Platform.runLater(()->{
+                    SongModel loadedSong = musicPlayer.getLoadedSong();
+                    titleLabel.setText(loadedSong.getSongName());
+                    artistLabel.setText(loadedSong.getArtist().getArtistName());
+                    albumLabel.setText(loadedSong.getAlbum().getAlbumName());
+                    Image image = new Image(new ByteArrayInputStream(loadedSong.getAlbum().getAlbumImage()));
+                    albumImageView.setImage(image);
+                });
+            }
+
+            @Override
+            public void onPause(MusicPlayerStatusChangeEvent e) {
+
+            }
+
+            @Override
+            public void onResume(MusicPlayerStatusChangeEvent e) {
+
+            }
+
+            @Override
+            public void onDispose(MusicPlayerStatusChangeEvent e) {
+                Platform.runLater(()->{
+                    titleLabel.setText("");
+                    artistLabel.setText("");
+                    albumLabel.setText("");
+                    albumImageView.setImage(null);
+                });
+            }
+        });
     }
 
+    public static EventManager getEventManager() {
+        return eventManager;
+    }
+
+    public static Library getLibrary() {
+        return library;
+    }
+
+    public static MusicPlayer getMusicPlayer() {
+        return musicPlayer;
+    }
+
+    public static Scene getPrimaryScene() {
+        return primaryScene;
+    }
+
+    public static Stage getPrimaryStage() {
+        return primaryStage;
+    }
 }

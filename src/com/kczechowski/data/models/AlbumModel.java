@@ -31,9 +31,6 @@ public class AlbumModel {
 
     @Override
     public String toString() {
-        return "AlbumModel{" +
-                "albumID='" + albumID + '\'' +
-                ", albumName='" + albumName + '\'' +
-                '}';
+        return albumName;
     }
 }

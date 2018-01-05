@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.AnchorPane?>
+<ScrollPane id="SideMenu" hbarPolicy="NEVER" prefWidth="200" stylesheets="@css/default_style.css" xmlns="http://javafx.com/javafx/8.0.121" xmlns:fx="http://javafx.com/fxml/1">
+   <content>
+      <AnchorPane prefWidth="200.0">
+         <children>
+            <Button id="SideMenu_BuildLibraryButton" mnemonicParsing="false" styleClass="side_menu_button" stylesheets="@css/default_style.css" text="Build library" />
+            <Button id="SideMenu_LoadLibraryButton" layoutY="25.0" mnemonicParsing="false" styleClass="side_menu_button" text="Load library" AnchorPane.topAnchor="25.0" />
+            <Label layoutX="82.0" layoutY="70.0" text="Library" textAlignment="CENTER" />
+            <Separator layoutY="50.0" prefHeight="20.0" prefWidth="200.0" />
+            <Label id="SideMenu_LoadedLibraryPath" layoutX="83.0" layoutY="87.0" text="(none)" textAlignment="CENTER" />
+            <AnchorPane disable="true" id="SideMenu_LoadedLibraryContentGroup" layoutX="0.0" layoutY="104.0" prefWidth="200.0">
+               <children>
+                  <Button id="SideMenu_LoadedLibraryAlbumsButton" layoutY="27.0" mnemonicParsing="false" styleClass="side_menu_button" text="Albums" />
+                  <Button id="SideMenu_LoadedLibraryArtistsButton" layoutY="2.0" mnemonicParsing="false" styleClass="side_menu_button" text="Artists" />
+                  <Button id="SideMenu_LoadedLibrarySongsButton" layoutY="52.0" mnemonicParsing="false" styleClass="side_menu_button" text="Songs" />
+               </children>
+            </AnchorPane>
+         </children>
+      </AnchorPane>
+   </content>
+</ScrollPane>

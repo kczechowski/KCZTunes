@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.AnchorPane?>
+<ScrollPane id="BuildLibraryStatePane" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="400.0" prefWidth="600.0" xmlns="http://javafx.com/javafx/8.0.121" xmlns:fx="http://javafx.com/fxml/1">
+    <content>
+        <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="324.0" prefWidth="400.0">
+         <children>
+            <Label layoutX="14.0" layoutY="8.0" text="Output library path" />
+            <Button id="SetOutputButton" layoutX="266.0" layoutY="4.0" mnemonicParsing="false" text="Set" />
+            <TextField id="OutputPathField" layoutX="117.0" layoutY="4.0" />
+            <ListView id="ResourcesList" layoutX="117.0" layoutY="37.0" prefHeight="200.0" prefWidth="183.0" />
+            <Label layoutX="62.0" layoutY="129.0" text="Resources" />
+            <Button id="AddResButton" layoutX="117.0" layoutY="237.0" mnemonicParsing="false" prefHeight="25.0" prefWidth="90.0" text="Add" />
+            <Button id="RemResButton" layoutX="210.0" layoutY="237.0" mnemonicParsing="false" prefHeight="25.0" prefWidth="90.0" text="Remove" />
+            <Button id="BuildLibButton" layoutX="187.0" layoutY="298.0" mnemonicParsing="false" text="Build" textFill="RED" />
+         </children>
+        </AnchorPane>
+    </content>
+</ScrollPane>

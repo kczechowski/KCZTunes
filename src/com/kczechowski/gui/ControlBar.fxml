@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.image.Image?>
+<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.VBox?>
+<ToolBar id="ControlBarToolBar" xmlns="http://javafx.com/javafx/8.0.121" xmlns:fx="http://javafx.com/fxml/1">
+   <items>
+      <HBox prefWidth="200.0">
+         <children>
+            <ImageView id="ControlBarAlbumImageView" cache="true" fitHeight="64" fitWidth="64" pickOnBounds="true" preserveRatio="true">
+               <image>
+                  <Image url="@../../../../res/nullAlbumImage.png" />
+               </image></ImageView>
+            <VBox alignment="CENTER_LEFT">
+               <children>
+                  <Label id="ControlBarSongName"/>
+                  <Label id="ControlBarAlbumName"/>
+                  <Label id="ControlBarArtistName"/>
+               </children></VBox>
+         </children>
+      </HBox>
+      <HBox alignment="CENTER">
+         <children>
+            <Button id="ControlBarResumeButton" mnemonicParsing="false" text="Play" />
+            <Button id="ControlBarPauseButton" mnemonicParsing="false" text="Pause" />
+         </children>
+      </HBox>
+   </items>
+</ToolBar>

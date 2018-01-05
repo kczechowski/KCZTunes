@@ -48,6 +48,8 @@ public class Library {
 
     private boolean isLoaded = false;
 
+    private Path lastBuiltLibraryPath;
+
     public boolean isLoaded() {
         return isLoaded;
     }
@@ -56,107 +58,113 @@ public class Library {
         resources = new HashSet<>();
     }
 
-    public void build(String outputPath) throws IOException {
-        App.eventManager.fireLibraryStatusChangeEvent(new LibraryStatusChangeEvent(this, LibraryStatusChangeEvent.STARTED_BUILDING));
+    public void build(String outputPath){
+        try {
+            App.eventManager.fireLibraryStatusChangeEvent(new LibraryStatusChangeEvent(this, LibraryStatusChangeEvent.STARTED_BUILDING));
 
-        List<File> songsFiles = new ArrayList<>();
-        //Add all music files from all sources to list
-        for(File file : resources){
-            songsFiles.addAll(FilesUtils.getMusicFilesInFolderIncludingSubfolders(file));
+            List<File> songsFiles = new ArrayList<>();
+            //Add all music files from all sources to list
+            for (File file : resources) {
+                songsFiles.addAll(FilesUtils.getMusicFilesInFolderIncludingSubfolders(file));
+            }
+
+            System.out.println(songsFiles.size() + " songs found.");
+
+            //Create library directory and delete the old one
+            Path libraryOutputPath = Paths.get(outputPath + File.separator + "library");
+            FileUtils.deleteDirectory(libraryOutputPath.toFile());
+            Files.createDirectories(libraryOutputPath);
+
+            HashMap<String, ArtistModel> artistModelHashMap = new HashMap<>();
+            HashMap<String, AlbumModel> albumModelHashMap = new HashMap<>();
+            HashMap<String, SongModel> songModelHashMap = new HashMap<>();
+
+            for (File file : songsFiles) {
+
+                //check if file has tags
+                if (!hasMP3FileProperTags(file))
+                    continue;
+
+                HashMap songTags = getTagsFromMP3File(file);
+                String songName = (String) songTags.get(TAG_TITLE);
+                String artistName = (String) songTags.get(TAG_ARTIST);
+                String albumName = (String) songTags.get(TAG_ALBUM);
+                String songTrack = (String) songTags.get(TAG_TRACK);
+                String songDuration = (String) songTags.get(TAG_DURATION);
+                String songPath = file.getAbsolutePath();
+                byte[] albumImage = (byte[]) songTags.get(TAG_ALBUM_IMAGE);
+
+                String artistKey = formatID(artistName);
+                String albumKey = artistKey + ">" + formatID(albumName);
+                String songKey = albumKey + ">" + formatID(songName);
+
+                System.out.println("Adding \"" + songKey + "\" to library.");
+
+                //Assign artists to map
+                if (!artistModelHashMap.containsKey(artistKey)) {
+                    ArtistModel artistModel = new ArtistModel();
+                    artistModel.setArtistName(artistName);
+                    artistModel.setArtistID(artistKey);
+                    artistModelHashMap.put(artistKey, artistModel);
+
+                    //Create directory for every artist
+                    Files.createDirectories(Paths.get(libraryOutputPath + File.separator + artistKey));
+                }
+
+                //Assign albums to map
+                if (!albumModelHashMap.containsKey(albumKey)) {
+                    AlbumModel albumModel = new AlbumModel();
+                    albumModel.setAlbumName(albumName);
+                    albumModel.setAlbumID(albumKey);
+                    albumModel.setAlbumImage(albumImage);
+                    albumModelHashMap.put(albumKey, albumModel);
+
+                    //Create directory for every album
+                    Files.createDirectories(Paths.get(libraryOutputPath + File.separator + artistKey + File.separator + formatID(albumName)));
+                }
+
+                //Assign songs to map
+                if (!songModelHashMap.containsKey(songKey)) {
+                    String songTargetPath = File.separator + artistKey + File.separator + formatID(albumName) + File.separator + FilesUtils.getCleanFilePath(formatID(songName)) + ".mp3";
+                    Path sourcePath = Paths.get(songPath);
+                    Path targetPath = Paths.get(libraryOutputPath + songTargetPath);
+                    SongModel songModel = new SongModel();
+                    songModel.setSongName(songName);
+                    songModel.setSongID(songKey);
+                    songModel.setSongPath(songTargetPath);
+                    songModel.setSongTrack(songTrack);
+                    songModel.setSongDuration(songDuration);
+                    songModelHashMap.put(songKey, songModel);
+
+                    //Copy every file from source to library directory
+                    Files.copy(sourcePath, targetPath, StandardCopyOption.REPLACE_EXISTING);
+                }
+            }
+
+            //Save library.json file
+            LibraryWrapper libraryWrapper = new LibraryWrapper();
+            libraryWrapper.setArtists(new ArrayList<ArtistModel>(artistModelHashMap.values()));
+            libraryWrapper.setAlbums(new ArrayList<AlbumModel>(albumModelHashMap.values()));
+            libraryWrapper.setSongs(new ArrayList<SongModel>(songModelHashMap.values()));
+
+            Gson gson = new Gson();
+            String toSave = gson.toJson(libraryWrapper, LibraryWrapper.class);
+
+            FileWriter fileWriter = new FileWriter(libraryOutputPath + File.separator + "library.json");
+            fileWriter.write(toSave);
+            fileWriter.close();
+
+            lastBuiltLibraryPath = Paths.get(outputPath);
+
+            App.eventManager.fireLibraryStatusChangeEvent(new LibraryStatusChangeEvent(this, LibraryStatusChangeEvent.FINISHED_BUILDING));
+        }catch(IOException e){
+            App.eventManager.fireLibraryStatusChangeEvent(new LibraryStatusChangeEvent(this, LibraryStatusChangeEvent.FAILED_TO_BUILD, e));
         }
-
-        System.out.println(songsFiles.size() + " songs found.");
-
-        //Create library directory and delete the old one
-        Path libraryOutputPath = Paths.get(outputPath + File.separator + "library");
-        FileUtils.deleteDirectory(libraryOutputPath.toFile());
-        Files.createDirectories(libraryOutputPath);
-
-        HashMap<String, ArtistModel> artistModelHashMap = new HashMap<>();
-        HashMap<String, AlbumModel> albumModelHashMap = new HashMap<>();
-        HashMap<String, SongModel> songModelHashMap = new HashMap<>();
-
-        for(File file : songsFiles){
-
-            //check if file has tags
-            if(!hasMP3FileProperTags(file))
-                continue;
-
-            HashMap songTags = getTagsFromMP3File(file);
-            String songName = (String) songTags.get(TAG_TITLE);
-            String artistName = (String) songTags.get(TAG_ARTIST);
-            String albumName = (String) songTags.get(TAG_ALBUM);
-            String songTrack = (String) songTags.get(TAG_TRACK);
-            String songDuration = (String) songTags.get(TAG_DURATION);
-            String songPath = file.getAbsolutePath();
-            byte[] albumImage = (byte[]) songTags.get(TAG_ALBUM_IMAGE);
-
-            String artistKey = formatID(artistName);
-            String albumKey = artistKey + ">" + formatID(albumName);
-            String songKey = albumKey + ">" + formatID(songName);
-
-            System.out.println("Adding \"" + songKey + "\" to library.");
-
-            //Assign artists to map
-            if(!artistModelHashMap.containsKey(artistKey)){
-                ArtistModel artistModel = new ArtistModel();
-                artistModel.setArtistName(artistName);
-                artistModel.setArtistID(artistKey);
-                artistModelHashMap.put(artistKey, artistModel);
-
-                //Create directory for every artist
-                Files.createDirectories(Paths.get(libraryOutputPath + File.separator + artistKey));
-            }
-
-            //Assign albums to map
-            if(!albumModelHashMap.containsKey(albumKey)){
-                AlbumModel albumModel = new AlbumModel();
-                albumModel.setAlbumName(albumName);
-                albumModel.setAlbumID(albumKey);
-                albumModel.setAlbumImage(albumImage);
-                albumModelHashMap.put(albumKey, albumModel);
-
-                //Create directory for every album
-                Files.createDirectories(Paths.get(libraryOutputPath + File.separator + artistKey + File.separator + formatID(albumName)));
-            }
-
-            //Assign songs to map
-            if(!songModelHashMap.containsKey(songKey)){
-                String songTargetPath = File.separator + artistKey + File.separator + formatID(albumName) + File.separator + FilesUtils.getCleanFilePath(formatID(songName)) + ".mp3";
-                Path sourcePath = Paths.get(songPath);
-                Path targetPath = Paths.get(libraryOutputPath + songTargetPath);
-                SongModel songModel = new SongModel();
-                songModel.setSongName(songName);
-                songModel.setSongID(songKey);
-                songModel.setSongPath(songTargetPath);
-                songModel.setSongTrack(songTrack);
-                songModel.setSongDuration(songDuration);
-                songModelHashMap.put(songKey, songModel);
-
-                //Copy every file from source to library directory
-                Files.copy(sourcePath, targetPath, StandardCopyOption.REPLACE_EXISTING);
-            }
-        }
-
-        //Save library.json file
-        LibraryWrapper libraryWrapper = new LibraryWrapper();
-        libraryWrapper.setArtists(new ArrayList<ArtistModel>(artistModelHashMap.values()));
-        libraryWrapper.setAlbums(new ArrayList<AlbumModel>(albumModelHashMap.values()));
-        libraryWrapper.setSongs(new ArrayList<SongModel>(songModelHashMap.values()));
-
-        Gson gson = new Gson();
-        String toSave = gson.toJson(libraryWrapper, LibraryWrapper.class);
-
-        FileWriter fileWriter = new FileWriter(libraryOutputPath + File.separator + "library.json");
-        fileWriter.write(toSave);
-        fileWriter.close();
-
-        App.eventManager.fireLibraryStatusChangeEvent(new LibraryStatusChangeEvent(this, LibraryStatusChangeEvent.FINISHED_BUILDING));
-
     }
 
-    public void loadLibrary(Path path) throws IOException {
-            App.eventManager.fireLibraryStatusChangeEvent(new LibraryStatusChangeEvent(this, LibraryStatusChangeEvent.STARTED_LOADING));
+    public void loadLibrary(Path path){
+        App.eventManager.fireLibraryStatusChangeEvent(new LibraryStatusChangeEvent(this, LibraryStatusChangeEvent.STARTED_LOADING));
+        try {
             isLoaded = false;
             JsonReader jsonReader = new JsonReader(new FileReader(path + File.separator + "library.json"));
             Gson gson = new Gson();
@@ -171,7 +179,7 @@ public class Library {
             Collections.sort(gSongs, songModelComparator);
 
             //assign artist and album to every song
-            for(SongModel songModel : gSongs){
+            for (SongModel songModel : gSongs) {
                 ArtistModel artistModel = App.library.getArtistById(Library.getArtistID(songModel.getSongID()));
                 AlbumModel albumModel = App.library.getAlbumById(Library.getAlbumID(songModel.getSongID()));
                 songModel.setArtist(artistModel);
@@ -180,7 +188,10 @@ public class Library {
 
             this.loadedLibraryPath = path;
             isLoaded = true;
-        App.eventManager.fireLibraryStatusChangeEvent(new LibraryStatusChangeEvent(this, LibraryStatusChangeEvent.FINISHED_LOADING));
+            App.eventManager.fireLibraryStatusChangeEvent(new LibraryStatusChangeEvent(this, LibraryStatusChangeEvent.FINISHED_LOADING));
+        }catch(IOException e){
+            App.eventManager.fireLibraryStatusChangeEvent(new LibraryStatusChangeEvent(this, LibraryStatusChangeEvent.FAILED_TO_LOAD, e));
+        }
 
     }
 
@@ -307,5 +318,9 @@ public class Library {
         gAlbums.clear();
         gArtists.clear();
         resources.clear();
+    }
+
+    public Path getLastBuiltLibraryPath() {
+        return lastBuiltLibraryPath;
     }
 }

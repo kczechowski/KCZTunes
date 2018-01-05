@@ -7,15 +7,20 @@ import com.kczechowski.main.App;
 import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.fxml.FXMLLoader;
+import javafx.scene.Node;
 import javafx.scene.control.Button;
+import javafx.scene.control.Label;
 import javafx.scene.control.ListView;
-import javafx.scene.layout.VBox;
-import javafx.scene.text.Text;
+import javafx.scene.control.ScrollPane;
 
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 
 public class ArtistsListState extends State {
+
+    private ScrollPane scrollPane;
 
     public ArtistsListState(StateManager stateManager) {
         super(stateManager);
@@ -23,15 +28,24 @@ public class ArtistsListState extends State {
 
     @Override
     public void init() {
-        Button backButton = new Button("<");
-        backButton.setOnAction(event -> {
+        FXMLLoader fxmlLoader = new FXMLLoader();
+        fxmlLoader.setLocation(getClass().getResource("/com/kczechowski/gui/TextListStatePane.fxml"));
+        try {
+            scrollPane = fxmlLoader.load();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        Label infoLabel = (Label) scrollPane.getContent().lookup("#InfoLabel");
+
+        Button backButton = (Button) scrollPane.getContent().lookup("#BackButton");
+        backButton.setOnAction(action ->{
             stateManager.popState();
         });
-        Text text = new Text("Display all artists");
+
+        ListView listView = (ListView) scrollPane.getContent().lookup("#ListView");
 
         ObservableList list = FXCollections.observableArrayList();
-
-        ListView listView = new ListView();
         listView.setItems(list);
 
         listView.getSelectionModel().selectedIndexProperty().addListener((observable, oldValue, newValue) -> {
@@ -47,21 +61,16 @@ public class ArtistsListState extends State {
 
         });
 
-
-        VBox vBox = new VBox();
-        vBox.getChildren().addAll(backButton, text, listView);
-
-        pane.getChildren().addAll(vBox);
-
-
         new Thread(() -> {
 
             List<ArtistModel> artists = App.library.getAllArtists();
             Platform.runLater(() -> {
                 list.addAll(artists);
+                infoLabel.setText("Artists");
             });
 
         }).start();
+
     }
 
     @Override
@@ -73,4 +82,10 @@ public class ArtistsListState extends State {
     public void update() {
 
     }
+
+    @Override
+    public Node getView() {
+        return scrollPane;
+    }
+
 }

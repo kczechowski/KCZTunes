@@ -22,9 +22,6 @@ public class ArtistModel {
 
     @Override
     public String toString() {
-        return "ArtistModel{" +
-                "artistID='" + artistID + '\'' +
-                ", artistName='" + artistName + '\'' +
-                '}';
+        return artistName;
     }
 }

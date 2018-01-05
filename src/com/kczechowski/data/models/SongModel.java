@@ -68,12 +68,6 @@ public class SongModel {
 
     @Override
     public String toString() {
-        return "SongModel{" +
-                "songID='" + songID + '\'' +
-                ", songName='" + songName + '\'' +
-                ", songPath='" + songPath + '\'' +
-                ", songTrack='" + songTrack + '\'' +
-                ", songDuration='" + songDuration + '\'' +
-                '}';
+        return songName;
     }
 }
