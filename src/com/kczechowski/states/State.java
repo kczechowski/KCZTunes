@@ -19,9 +19,6 @@ public abstract class State {
     public abstract void dispose();
     public abstract void update();
     public abstract Node getView();
-//    public Pane getContent(){
-//        return pane;
-//    }
 
     public HashMap<String, Object> getBundle() {
         return bundle;
