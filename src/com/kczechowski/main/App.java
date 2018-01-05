@@ -75,6 +75,7 @@ public class App extends Application {
         setButtonActions();
         updateLayout();
 
+
         eventManager.fireMusicPlayerChangeEvent(new MusicPlayerStatusChangeEvent(this, MusicPlayerStatusChangeEvent.RESUME));
     }
 
