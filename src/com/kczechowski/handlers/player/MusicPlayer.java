@@ -30,7 +30,7 @@ public class MusicPlayer {
 
             @Override
             public void onSongPlayRequest(MusicPlayerStatusChangeEvent event) {
-                if(!isNullSong) {
+                if(!isNullSong && mp3Player!=null) {
                     mp3Player.stop();
                 }
                 try {
@@ -55,7 +55,7 @@ public class MusicPlayer {
 
             @Override
             public void onPause(MusicPlayerStatusChangeEvent event) {
-                if(!isNullSong){
+                if(!isNullSong && mp3Player!=null){
                     mp3Player.pause();
                     isPlaying = false;
                 }
@@ -63,7 +63,7 @@ public class MusicPlayer {
 
             @Override
             public void onResume(MusicPlayerStatusChangeEvent event) {
-                if(!isNullSong){
+                if(!isNullSong && mp3Player!=null){
                     mp3Player.play();
                     isPlaying = true;
                 }
