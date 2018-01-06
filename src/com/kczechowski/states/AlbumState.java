@@ -53,6 +53,14 @@ public class AlbumState extends State {
             App.eventManager.fireMusicPlayerChangeEvent(new MusicPlayerStatusChangeEvent(this, MusicPlayerStatusChangeEvent.SONG_PLAY_REQUEST, songModel));
         });
 
+        listView.setOnMouseClicked(event -> {
+            int l = listView.getSelectionModel().selectedIndexProperty().get();
+            if(l>=0){
+                SongModel songModel = (SongModel) list.get(l);
+                App.eventManager.fireMusicPlayerChangeEvent(new MusicPlayerStatusChangeEvent(this, MusicPlayerStatusChangeEvent.SONG_PLAY_REQUEST, songModel));
+            }
+        });
+
 
         new Thread(() -> {
 

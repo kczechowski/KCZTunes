@@ -10,8 +10,8 @@
             <Button id="SideMenu_LoadLibraryButton" layoutY="25.0" mnemonicParsing="false" styleClass="side_menu_button" text="Load library" AnchorPane.topAnchor="25.0" />
             <Label layoutX="82.0" layoutY="70.0" text="Library" textAlignment="CENTER" />
             <Separator layoutY="50.0" prefHeight="20.0" prefWidth="200.0" />
-            <Label id="SideMenu_LoadedLibraryPath" layoutX="83.0" layoutY="87.0" text="(none)" textAlignment="CENTER" />
-            <AnchorPane disable="true" id="SideMenu_LoadedLibraryContentGroup" layoutX="0.0" layoutY="104.0" prefWidth="200.0">
+            <Label id="SideMenu_LoadedLibraryPath" alignment="CENTER" contentDisplay="CENTER" layoutY="82.0" prefWidth="200" text="(none)" textAlignment="CENTER" textOverrun="WORD_ELLIPSIS" />
+            <AnchorPane id="SideMenu_LoadedLibraryContentGroup" disable="true" layoutX="0.0" layoutY="104.0" prefWidth="200.0">
                <children>
                   <Button id="SideMenu_LoadedLibraryAlbumsButton" layoutY="27.0" mnemonicParsing="false" styleClass="side_menu_button" text="Albums" />
                   <Button id="SideMenu_LoadedLibraryArtistsButton" layoutY="2.0" mnemonicParsing="false" styleClass="side_menu_button" text="Artists" />

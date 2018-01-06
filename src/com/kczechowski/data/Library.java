@@ -195,8 +195,8 @@ public class Library {
 
     }
 
-    public String formatID(String s){
-        return s.replaceAll("\\s+", "_").toLowerCase();
+    public static String formatID(String s){
+        return s.replaceAll("[!@#$%^&*?\\s+]", "_").toLowerCase();
     }
 
     public void addResourceDirectory(File... file){

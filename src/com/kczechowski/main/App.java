@@ -75,7 +75,6 @@ public class App extends Application {
         setButtonActions();
         updateLayout();
 
-
         eventManager.fireMusicPlayerChangeEvent(new MusicPlayerStatusChangeEvent(this, MusicPlayerStatusChangeEvent.RESUME));
     }
 
@@ -197,7 +196,7 @@ public class App extends Application {
             @Override
             public void onFinishedLoading(LibraryStatusChangeEvent event) {
                 Platform.runLater(()->{
-                    label.setText(library.getLoadedLibraryPath().toString());
+                    label.setText("("+library.getLoadedLibraryPath().toString()+")");
                     libraryGroup.setDisable(false);
                     if(dialog!=null){
                         dialog.close();

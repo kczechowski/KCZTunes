@@ -59,6 +59,20 @@ public class ArtistState extends State {
             stateManager.pushState(albumState);
         });
 
+        listView.setOnMouseClicked(event -> {
+            int l = listView.getSelectionModel().selectedIndexProperty().get();
+            if(l>=0){
+                AlbumModel albumModel = (AlbumModel) list.get(l);
+
+                HashMap<String, Object> bundle = new HashMap<>();
+                bundle.put(BundleKeys.ALBUM_ID, albumModel.getAlbumID());
+
+                AlbumState albumState = new AlbumState(stateManager);
+                albumState.setBundle(bundle);
+                stateManager.pushState(albumState);
+            }
+        });
+
         new Thread(() -> {
 
             String artistID = (String) bundle.get(BundleKeys.ARTIST_ID);

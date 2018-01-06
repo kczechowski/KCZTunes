@@ -61,6 +61,20 @@ public class ArtistsListState extends State {
 
         });
 
+        listView.setOnMouseClicked(event -> {
+            int l = listView.getSelectionModel().selectedIndexProperty().get();
+            if(l>=0){
+                ArtistModel artistModel = (ArtistModel) list.get(l);
+
+                HashMap<String, Object> bundle = new HashMap<>();
+                bundle.put(BundleKeys.ARTIST_ID, artistModel.getArtistID());
+
+                ArtistState artistState = new ArtistState(stateManager);
+                artistState.setBundle(bundle);
+                stateManager.pushState(artistState);
+            }
+        });
+
         new Thread(() -> {
 
             List<ArtistModel> artists = App.library.getAllArtists();
